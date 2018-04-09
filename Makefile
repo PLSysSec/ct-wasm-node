@@ -499,6 +499,9 @@ test-node-inspect: $(NODE_EXE)
 test-tick-processor: all
 	$(PYTHON) tools/test.py tick-processor
 
+test-ct-wasm: all
+	$(PYTHON) tools/test.py ct-wasm
+
 .PHONY: test-hash-seed
 # Verifies the hash seed used by V8 for hashing is random.
 test-hash-seed: all
