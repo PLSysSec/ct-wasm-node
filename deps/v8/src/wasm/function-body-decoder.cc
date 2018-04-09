@@ -351,7 +351,7 @@ class WasmGraphBuildingInterface {
   void StoreMem(Decoder* decoder, StoreType type,
                 const MemoryAccessOperand<validate>& operand,
                 const Value& index, const Value& value) {
-    BUILD(StoreMem, type.mem_rep(), index.node, operand.offset,
+    BUILD(StoreMem, MachineRepresentation(type.mem_rep()), index.node, operand.offset,
           operand.alignment, value.node, decoder->position(),
           type.value_type());
   }

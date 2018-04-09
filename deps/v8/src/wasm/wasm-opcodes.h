@@ -17,7 +17,21 @@ namespace wasm {
 
 // We reuse the internal machine type to represent WebAssembly types.
 // A typedef improves readability without adding a whole new type system.
-using ValueType = MachineRepresentation;
+class ValueType {
+  public:
+    constexpr ValueType() : v(0) {}
+    constexpr ValueType(MachineRepresentation v) : v(static_cast<uint8_t>(v)) {}
+    constexpr explicit operator MachineRepresentation() const {
+      return static_cast<MachineRepresentation>(this->v % static_cast<uint8_t>(MachineRepresentation::kLastRepresentation));
+    }
+
+    constexpr operator uint8_t() const {
+      return static_cast<uint8_t>(this->v);
+    }
+  private:
+    uint8_t v;
+};
+
 constexpr ValueType kWasmStmt = MachineRepresentation::kNone;
 constexpr ValueType kWasmI32 = MachineRepresentation::kWord32;
 constexpr ValueType kWasmI64 = MachineRepresentation::kWord64;
@@ -658,7 +672,7 @@ class V8_EXPORT_PRIVATE WasmOpcodes {
     return MemSize(type.representation());
   }
 
-  static byte MemSize(ValueType type) { return 1 << ElementSizeLog2Of(type); }
+  static byte MemSize(ValueType type) { return 1 << ElementSizeLog2Of(MachineRepresentation(type)); }
 
   static ValueTypeCode ValueTypeCodeFor(ValueType type) {
     switch (type) {

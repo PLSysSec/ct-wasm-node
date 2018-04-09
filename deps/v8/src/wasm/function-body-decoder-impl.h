@@ -410,9 +410,10 @@ struct ValueBase {
 template <typename Value>
 struct Merge {
   uint32_t arity;
-  union {
+  union V {
     Value* array;
     Value first;
+    V() : first() {}
   } vals;  // Either multiple values or a single value.
 
   // Tracks whether this merge was ever reached. Uses precise reachability, like
@@ -2028,7 +2029,7 @@ class WasmFullDecoder : public WasmDecoder<validate> {
   unsigned SimdExtractLane(WasmOpcode opcode, ValueType type) {
     SimdLaneOperand<validate> operand(this, this->pc_);
     if (this->Validate(this->pc_, opcode, operand)) {
-      Value inputs[] = {Pop(0, ValueType::kSimd128)};
+      Value inputs[] = {Pop(0, kWasmS128)};
       auto* result = Push(type);
       CALL_INTERFACE_IF_REACHABLE(SimdLaneOp, opcode, operand,
                                   ArrayVector(inputs), result);
@@ -2041,8 +2042,8 @@ class WasmFullDecoder : public WasmDecoder<validate> {
     if (this->Validate(this->pc_, opcode, operand)) {
       Value inputs[2];
       inputs[1] = Pop(1, type);
-      inputs[0] = Pop(0, ValueType::kSimd128);
-      auto* result = Push(ValueType::kSimd128);
+      inputs[0] = Pop(0, kWasmS128);
+      auto* result = Push(kWasmS128);
       CALL_INTERFACE_IF_REACHABLE(SimdLaneOp, opcode, operand,
                                   ArrayVector(inputs), result);
     }
@@ -2052,8 +2053,8 @@ class WasmFullDecoder : public WasmDecoder<validate> {
   unsigned SimdShiftOp(WasmOpcode opcode) {
     SimdShiftOperand<validate> operand(this, this->pc_);
     if (this->Validate(this->pc_, opcode, operand)) {
-      auto input = Pop(0, ValueType::kSimd128);
-      auto* result = Push(ValueType::kSimd128);
+      auto input = Pop(0, kWasmS128);
+      auto* result = Push(kWasmS128);
       CALL_INTERFACE_IF_REACHABLE(SimdShiftOp, opcode, operand, input, result);
     }
     return operand.length;
@@ -2062,9 +2063,9 @@ class WasmFullDecoder : public WasmDecoder<validate> {
   unsigned Simd8x16ShuffleOp() {
     Simd8x16ShuffleOperand<validate> operand(this, this->pc_);
     if (this->Validate(this->pc_, operand)) {
-      auto input1 = Pop(1, ValueType::kSimd128);
-      auto input0 = Pop(0, ValueType::kSimd128);
-      auto* result = Push(ValueType::kSimd128);
+      auto input1 = Pop(1, kWasmS128);
+      auto input0 = Pop(0, kWasmS128);
+      auto* result = Push(kWasmS128);
       CALL_INTERFACE_IF_REACHABLE(Simd8x16ShuffleOp, operand, input0, input1,
                                   result);
     }
@@ -2075,23 +2076,23 @@ class WasmFullDecoder : public WasmDecoder<validate> {
     unsigned len = 0;
     switch (opcode) {
       case kExprF32x4ExtractLane: {
-        len = SimdExtractLane(opcode, ValueType::kFloat32);
+        len = SimdExtractLane(opcode, kWasmF32);
         break;
       }
       case kExprI32x4ExtractLane:
       case kExprI16x8ExtractLane:
       case kExprI8x16ExtractLane: {
-        len = SimdExtractLane(opcode, ValueType::kWord32);
+        len = SimdExtractLane(opcode, kWasmI32);
         break;
       }
       case kExprF32x4ReplaceLane: {
-        len = SimdReplaceLane(opcode, ValueType::kFloat32);
+        len = SimdReplaceLane(opcode, kWasmF32);
         break;
       }
       case kExprI32x4ReplaceLane:
       case kExprI16x8ReplaceLane:
       case kExprI8x16ReplaceLane: {
-        len = SimdReplaceLane(opcode, ValueType::kWord32);
+        len = SimdReplaceLane(opcode, kWasmI32);
         break;
       }
       case kExprI32x4Shl:
@@ -2162,7 +2163,7 @@ class WasmFullDecoder : public WasmDecoder<validate> {
           this, this->pc_ + 1, ElementSizeLog2Of(memtype.representation()));
       len += operand.length;
       PopArgs(sig);
-      auto result = ret_type == MachineRepresentation::kNone
+      auto result = MachineRepresentation(ret_type) == MachineRepresentation::kNone
                         ? nullptr
                         : Push(GetReturnType(sig));
       CALL_INTERFACE_IF_REACHABLE(AtomicOp, opcode, vec2vec(args_), operand,

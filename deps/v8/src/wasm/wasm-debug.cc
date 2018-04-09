@@ -177,7 +177,7 @@ class InterpreterHandle {
     ScopedVector<WasmValue> wasm_args(num_params);
     uint8_t* arg_buf_ptr = arg_buffer;
     for (int i = 0; i < num_params; ++i) {
-      uint32_t param_size = 1 << ElementSizeLog2Of(sig->GetParam(i));
+      uint32_t param_size = 1 << ElementSizeLog2Of(MachineRepresentation(sig->GetParam(i)));
 #define CASE_ARG_TYPE(type, ctype)                                    \
   case type:                                                          \
     DCHECK_EQ(param_size, sizeof(ctype));                             \

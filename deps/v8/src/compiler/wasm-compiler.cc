@@ -76,8 +76,11 @@ bool ContainsSimd(wasm::FunctionSig* sig) {
   }
   return false;
 }
-
 }  // namespace
+
+int ElementSizeLog2Of(wasm::ValueType rep) {
+  return ElementSizeLog2Of(MachineRepresentation(rep));
+}
 
 WasmGraphBuilder::WasmGraphBuilder(
     ModuleEnv* env, Zone* zone, JSGraph* jsgraph, Handle<Code> centry_stub,
@@ -167,7 +170,7 @@ Node* WasmGraphBuilder::Phi(wasm::ValueType type, unsigned count, Node** vals,
   DCHECK(IrOpcode::IsMergeOpcode(control->opcode()));
   Node** buf = Realloc(vals, count, count + 1);
   buf[count] = control;
-  return graph()->NewNode(jsgraph()->common()->Phi(type, count), count + 1,
+  return graph()->NewNode(jsgraph()->common()->Phi(MachineRepresentation(type), count), count + 1,
                           buf);
 }
 
@@ -3303,7 +3306,7 @@ void WasmGraphBuilder::BuildCWasmEntry(Address wasm_context_address) {
   // Store the return value.
   DCHECK_GE(1, sig_->return_count());
   if (sig_->return_count() == 1) {
-    StoreRepresentation store_rep(sig_->GetReturn(), kNoWriteBarrier);
+    StoreRepresentation store_rep(MachineRepresentation(sig_->GetReturn()), kNoWriteBarrier);
     Node* store =
         graph()->NewNode(jsgraph()->machine()->Store(store_rep), arg_buffer,
                          Int32Constant(0), call, *effect_, *control_);
@@ -3318,7 +3321,7 @@ void WasmGraphBuilder::BuildCWasmEntry(Address wasm_context_address) {
         MachineRepresentation::kTagged,  // arg0 (code)
         MachineRepresentation::kTagged   // arg1 (buffer)
     };
-    wasm::FunctionSig c_entry_sig(1, 2, sig_reps);
+    Signature<MachineRepresentation> c_entry_sig(1, 2, sig_reps);
     Int64Lowering r(jsgraph()->graph(), jsgraph()->machine(),
                     jsgraph()->common(), jsgraph()->zone(), &c_entry_sig);
     r.LowerGraph();
@@ -3688,7 +3691,7 @@ const Operator* WasmGraphBuilder::GetSafeLoadOperator(int offset,
                                                       wasm::ValueType type) {
   int alignment = offset % (1 << ElementSizeLog2Of(type));
   MachineType mach_type = wasm::WasmOpcodes::MachineTypeFor(type);
-  if (alignment == 0 || jsgraph()->machine()->UnalignedLoadSupported(type)) {
+  if (alignment == 0 || jsgraph()->machine()->UnalignedLoadSupported(MachineRepresentation(type))) {
     return jsgraph()->machine()->Load(mach_type);
   }
   return jsgraph()->machine()->UnalignedLoad(mach_type);
@@ -3697,8 +3700,8 @@ const Operator* WasmGraphBuilder::GetSafeLoadOperator(int offset,
 const Operator* WasmGraphBuilder::GetSafeStoreOperator(int offset,
                                                        wasm::ValueType type) {
   int alignment = offset % (1 << ElementSizeLog2Of(type));
-  if (alignment == 0 || jsgraph()->machine()->UnalignedStoreSupported(type)) {
-    StoreRepresentation rep(type, WriteBarrierKind::kNoWriteBarrier);
+  if (alignment == 0 || jsgraph()->machine()->UnalignedStoreSupported(MachineRepresentation(type))) {
+    StoreRepresentation rep(MachineRepresentation(type), WriteBarrierKind::kNoWriteBarrier);
     return jsgraph()->machine()->Store(rep);
   }
   UnalignedStoreRepresentation rep(type);
@@ -3949,13 +3952,27 @@ Graph* WasmGraphBuilder::graph() { return jsgraph()->graph(); }
 
 void WasmGraphBuilder::LowerInt64() {
   if (jsgraph()->machine()->Is64()) return;
+  Signature<MachineRepresentation>::Builder sig_builder(jsgraph()->zone(), sig_->return_count(), sig_->parameter_count());
+  for(auto r : sig_->returns()) {
+    sig_builder.AddReturn(MachineRepresentation(r));
+  }
+  for(auto p : sig_->parameters()) {
+    sig_builder.AddReturn(MachineRepresentation(p));
+  }
   Int64Lowering r(jsgraph()->graph(), jsgraph()->machine(), jsgraph()->common(),
-                  jsgraph()->zone(), sig_);
+                  jsgraph()->zone(), sig_builder.Build());
   r.LowerGraph();
 }
 
 void WasmGraphBuilder::SimdScalarLoweringForTesting() {
-  SimdScalarLowering(jsgraph(), sig_).LowerGraph();
+  Signature<MachineRepresentation>::Builder sig_builder(jsgraph()->zone(), sig_->return_count(), sig_->parameter_count());
+  for(auto r : sig_->returns()) {
+    sig_builder.AddReturn(MachineRepresentation(r));
+  }
+  for(auto p : sig_->parameters()) {
+    sig_builder.AddReturn(MachineRepresentation(p));
+  }
+  SimdScalarLowering(jsgraph(), sig_builder.Build()).LowerGraph();
 }
 
 void WasmGraphBuilder::SetSourcePosition(Node* node,
@@ -4942,7 +4959,14 @@ SourcePositionTable* WasmCompilationUnit::BuildGraphForWasmFunction(
 
   if (builder.has_simd() &&
       (!CpuFeatures::SupportsWasmSimd128() || lower_simd_)) {
-    SimdScalarLowering(tf_.jsgraph_, func_body_.sig).LowerGraph();
+    Signature<MachineRepresentation>::Builder sig_builder(tf_.jsgraph_->zone(), func_body_.sig->return_count(), func_body_.sig->parameter_count());
+    for(auto r : func_body_.sig->returns()) {
+      sig_builder.AddReturn(MachineRepresentation(r));
+    }
+    for(auto p : func_body_.sig->parameters()) {
+      sig_builder.AddReturn(MachineRepresentation(p));
+    }
+    SimdScalarLowering(tf_.jsgraph_, sig_builder.Build()).LowerGraph();
   }
 
   if (func_index_ >= FLAG_trace_wasm_ast_start &&

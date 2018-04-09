@@ -2349,7 +2349,7 @@ class ThreadImpl {
     size_t offset = 0;
     WasmValue* wasm_args = sp_ - num_args;
     for (int i = 0; i < num_args; ++i) {
-      uint32_t param_size = 1 << ElementSizeLog2Of(sig->GetParam(i));
+      uint32_t param_size = 1 << ElementSizeLog2Of(MachineRepresentation(sig->GetParam(i)));
       if (arg_buffer.size() < offset + param_size) {
         arg_buffer.resize(std::max(2 * arg_buffer.size(), offset + param_size));
       }
@@ -2380,7 +2380,7 @@ class ThreadImpl {
     // value(s).
     uint32_t return_size = 0;
     for (ValueType t : sig->returns()) {
-      return_size += 1 << ElementSizeLog2Of(t);
+      return_size += 1 << ElementSizeLog2Of(MachineRepresentation(t));
     }
     if (arg_buffer.size() < return_size) {
       arg_buffer.resize(return_size);

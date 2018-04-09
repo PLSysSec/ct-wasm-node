@@ -925,7 +925,7 @@ class LiftoffCompiler {
       AddOutOfLineTrap(decoder->position(), protected_store_pc);
     }
     if (FLAG_wasm_trace_memory) {
-      TraceMemoryOperation(true, type.mem_rep(), index, operand.offset,
+      TraceMemoryOperation(true, MachineRepresentation(type.mem_rep()), index, operand.offset,
                            decoder->position());
     }
   }
