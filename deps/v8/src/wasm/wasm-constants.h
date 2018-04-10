@@ -18,6 +18,8 @@ enum ValueTypeCode : uint8_t {
   kLocalVoid = 0x40,
   kLocalI32 = 0x7f,
   kLocalI64 = 0x7e,
+  kLocalS32 = 0x7a,
+  kLocalS64 = 0x79,
   kLocalF32 = 0x7d,
   kLocalF64 = 0x7c,
   kLocalS128 = 0x7b

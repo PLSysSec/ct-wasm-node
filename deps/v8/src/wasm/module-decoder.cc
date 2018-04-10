@@ -1274,6 +1274,10 @@ class ModuleDecoderImpl : public Decoder {
         return kWasmI32;
       case kLocalI64:
         return kWasmI64;
+      case kLocalS32:
+        return kWasmS32;
+      case kLocalS64:
+        return kWasmS64;
       case kLocalF32:
         return kWasmF32;
       case kLocalF64:

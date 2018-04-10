@@ -275,12 +275,15 @@ Node* WasmGraphBuilder::Binop(wasm::WasmOpcode opcode, Node* left, Node* right,
   MachineOperatorBuilder* m = jsgraph()->machine();
   switch (opcode) {
     case wasm::kExprI32Add:
+    case wasm::kExprS32Add:
       op = m->Int32Add();
       break;
     case wasm::kExprI32Sub:
+    case wasm::kExprS32Sub:
       op = m->Int32Sub();
       break;
     case wasm::kExprI32Mul:
+    case wasm::kExprS32Mul:
       op = m->Int32Mul();
       break;
     case wasm::kExprI32DivS:
@@ -292,63 +295,81 @@ Node* WasmGraphBuilder::Binop(wasm::WasmOpcode opcode, Node* left, Node* right,
     case wasm::kExprI32RemU:
       return BuildI32RemU(left, right, position);
     case wasm::kExprI32And:
+    case wasm::kExprS32And:
       op = m->Word32And();
       break;
     case wasm::kExprI32Ior:
+    case wasm::kExprS32Ior:
       op = m->Word32Or();
       break;
     case wasm::kExprI32Xor:
+    case wasm::kExprS32Xor:
       op = m->Word32Xor();
       break;
     case wasm::kExprI32Shl:
+    case wasm::kExprS32Shl:
       op = m->Word32Shl();
       right = MaskShiftCount32(right);
       break;
     case wasm::kExprI32ShrU:
+    case wasm::kExprS32ShrU:
       op = m->Word32Shr();
       right = MaskShiftCount32(right);
       break;
     case wasm::kExprI32ShrS:
+    case wasm::kExprS32ShrS:
       op = m->Word32Sar();
       right = MaskShiftCount32(right);
       break;
     case wasm::kExprI32Ror:
+    case wasm::kExprS32Ror:
       op = m->Word32Ror();
       right = MaskShiftCount32(right);
       break;
     case wasm::kExprI32Rol:
+    case wasm::kExprS32Rol:
       right = MaskShiftCount32(right);
       return BuildI32Rol(left, right);
     case wasm::kExprI32Eq:
+    case wasm::kExprS32Eq:
       op = m->Word32Equal();
       break;
     case wasm::kExprI32Ne:
+    case wasm::kExprS32Ne:
       return Invert(Binop(wasm::kExprI32Eq, left, right));
     case wasm::kExprI32LtS:
+    case wasm::kExprS32LtS:
       op = m->Int32LessThan();
       break;
     case wasm::kExprI32LeS:
+    case wasm::kExprS32LeS:
       op = m->Int32LessThanOrEqual();
       break;
     case wasm::kExprI32LtU:
+    case wasm::kExprS32LtU:
       op = m->Uint32LessThan();
       break;
     case wasm::kExprI32LeU:
+    case wasm::kExprS32LeU:
       op = m->Uint32LessThanOrEqual();
       break;
     case wasm::kExprI32GtS:
+    case wasm::kExprS32GtS:
       op = m->Int32LessThan();
       std::swap(left, right);
       break;
     case wasm::kExprI32GeS:
+    case wasm::kExprS32GeS:
       op = m->Int32LessThanOrEqual();
       std::swap(left, right);
       break;
     case wasm::kExprI32GtU:
+    case wasm::kExprS32GtU:
       op = m->Uint32LessThan();
       std::swap(left, right);
       break;
     case wasm::kExprI32GeU:
+    case wasm::kExprS32GeU:
       op = m->Uint32LessThanOrEqual();
       std::swap(left, right);
       break;
@@ -544,6 +565,7 @@ Node* WasmGraphBuilder::Unop(wasm::WasmOpcode opcode, Node* input,
   MachineOperatorBuilder* m = jsgraph()->machine();
   switch (opcode) {
     case wasm::kExprI32Eqz:
+    case wasm::kExprS32Eqz:
       op = m->Word32Equal();
       return graph()->NewNode(op, input, jsgraph()->Int32Constant(0));
     case wasm::kExprF32Abs:
@@ -619,9 +641,11 @@ Node* WasmGraphBuilder::Unop(wasm::WasmOpcode opcode, Node* input,
       op = m->BitcastFloat32ToInt32();
       break;
     case wasm::kExprI32Clz:
+    case wasm::kExprS32Clz:
       op = m->Word32Clz();
       break;
-    case wasm::kExprI32Ctz: {
+    case wasm::kExprI32Ctz:
+    case wasm::kExprS32Ctz: {
       if (m->Word32Ctz().IsSupported()) {
         op = m->Word32Ctz().op();
         break;
@@ -633,7 +657,8 @@ Node* WasmGraphBuilder::Unop(wasm::WasmOpcode opcode, Node* input,
         return BuildI32Ctz(input);
       }
     }
-    case wasm::kExprI32Popcnt: {
+    case wasm::kExprI32Popcnt:
+    case wasm::kExprS32Popcnt: {
       if (m->Word32Popcnt().IsSupported()) {
         op = m->Word32Popcnt().op();
         break;
@@ -1041,12 +1066,14 @@ Node* WasmGraphBuilder::BuildChangeEndiannessStore(
       value = graph()->NewNode(m->BitcastFloat64ToInt64(), node);
       isFloat = true;
     case wasm::kWasmI64:
+    case wasm::kWasmS64:
       result = jsgraph()->Int64Constant(0);
       break;
     case wasm::kWasmF32:
       value = graph()->NewNode(m->BitcastFloat32ToInt32(), node);
       isFloat = true;
     case wasm::kWasmI32:
+    case wasm::kWasmS32:
       result = jsgraph()->Int32Constant(0);
       break;
     case wasm::kWasmS128:
@@ -2684,9 +2711,11 @@ Node* WasmGraphBuilder::BuildChangeFloat64ToTagged(Node* value) {
 Node* WasmGraphBuilder::ToJS(Node* node, wasm::ValueType type) {
   switch (type) {
     case wasm::kWasmI32:
+    case wasm::kWasmS32:
       return BuildChangeInt32ToTagged(node);
     case wasm::kWasmS128:
     case wasm::kWasmI64:
+    case wasm::kWasmS64:
       UNREACHABLE();
     case wasm::kWasmF32:
       node = graph()->NewNode(jsgraph()->machine()->ChangeFloat32ToFloat64(),
@@ -2783,13 +2812,15 @@ Node* WasmGraphBuilder::FromJS(Node* node, Node* js_context,
   num = BuildChangeTaggedToFloat64(num);
 
   switch (type) {
-    case wasm::kWasmI32: {
+    case wasm::kWasmI32:
+    case wasm::kWasmS32: {
       num = graph()->NewNode(jsgraph()->machine()->TruncateFloat64ToWord32(),
                              num);
       break;
     }
     case wasm::kWasmS128:
     case wasm::kWasmI64:
+    case wasm::kWasmS64:
       UNREACHABLE();
     case wasm::kWasmF32:
       num = graph()->NewNode(jsgraph()->machine()->TruncateFloat64ToFloat32(),
@@ -3987,6 +4018,80 @@ Node* WasmGraphBuilder::S128Zero() {
   return graph()->NewNode(jsgraph()->machine()->S128Zero());
 }
 
+
+Node* WasmGraphBuilder::SecretOp(wasm::WasmOpcode opcode, Node* const* inputs) {
+  MachineOperatorBuilder* m = jsgraph()->machine();
+  switch(opcode) {
+    case wasm::kExprS32Eqz:
+      return graph()->NewNode(m->Word32Equal(), inputs[0], jsgraph()->Int32Constant(0));
+    case wasm::kExprS32Clz:
+      return graph()->NewNode(m->Word32Clz(), inputs[0]);
+      break;
+    case wasm::kExprS32Ctz: {
+      if (m->Word32Ctz().IsSupported()) {
+        return graph()->NewNode(m->Word32Ctz().op(), inputs[0]);
+        break;
+      } else if (m->Word32ReverseBits().IsSupported()) {
+        Node* reversed = graph()->NewNode(m->Word32ReverseBits().op(), inputs[0]);
+        Node* result = graph()->NewNode(m->Word32Clz(), reversed);
+        return result;
+      } else {
+        return BuildI32Ctz(inputs[0]);
+      }
+    }
+    case wasm::kExprS32Popcnt: {
+      if (m->Word32Popcnt().IsSupported()) {
+        return graph()->NewNode(m->Word32Popcnt().op(), inputs[0]);
+      } else {
+        return BuildI32Popcnt(inputs[0]);
+      }
+    }
+    case wasm::kExprS32Add:
+      return graph()->NewNode(m->Int32Add(), inputs[0], inputs[1]);
+    case wasm::kExprS32Sub:
+      return graph()->NewNode(m->Int32Sub(), inputs[0], inputs[1]);
+    case wasm::kExprS32Mul:
+      return graph()->NewNode(m->Int32Mul(), inputs[0], inputs[1]);
+    case wasm::kExprS32And:
+      return graph()->NewNode(m->Word32And(), inputs[0], inputs[1]);
+    case wasm::kExprS32Ior:
+      return graph()->NewNode(m->Word32Or(), inputs[0], inputs[1]);
+    case wasm::kExprS32Xor:
+      return graph()->NewNode(m->Word32Xor(), inputs[0], inputs[1]);
+    case wasm::kExprS32Shl:
+      return graph()->NewNode(m->Word32Shl(), inputs[0], MaskShiftCount32(inputs[1]));
+    case wasm::kExprS32ShrU:
+      return graph()->NewNode(m->Word32Shr(), inputs[0], MaskShiftCount32(inputs[1]));
+    case wasm::kExprS32ShrS:
+      return graph()->NewNode(m->Word32Sar(), inputs[0], MaskShiftCount32(inputs[1]));
+    case wasm::kExprS32Ror:
+      return graph()->NewNode(m->Word32Ror(), inputs[0], MaskShiftCount32(inputs[1]));
+    case wasm::kExprS32Rol:
+      return BuildI32Rol(inputs[0], MaskShiftCount32(inputs[1]));
+    case wasm::kExprS32Eq:
+      return graph()->NewNode(m->Word32Equal(), inputs[0], inputs[1]);
+    case wasm::kExprS32Ne:
+      return Invert(SecretOp(wasm::kExprS32Eq, inputs));
+    case wasm::kExprS32LtS:
+      return graph()->NewNode(m->Int32LessThan(), inputs[0], inputs[1]);
+    case wasm::kExprS32LeS:
+      return graph()->NewNode(m->Int32LessThanOrEqual(), inputs[0], inputs[1]);
+    case wasm::kExprS32LtU:
+      return graph()->NewNode(m->Uint32LessThan(), inputs[0], inputs[1]);
+    case wasm::kExprS32LeU:
+      return graph()->NewNode(m->Uint32LessThanOrEqual(), inputs[0], inputs[1]);
+    case wasm::kExprS32GtS:
+      return graph()->NewNode(m->Int32LessThan(), inputs[1], inputs[0]);
+    case wasm::kExprS32GeS:
+      return graph()->NewNode(m->Int32LessThanOrEqual(), inputs[1], inputs[0]);
+    case wasm::kExprS32GtU:
+      return graph()->NewNode(m->Uint32LessThan(), inputs[1], inputs[0]);
+    case wasm::kExprS32GeU:
+      return graph()->NewNode(m->Uint32LessThanOrEqual(), inputs[1], inputs[0]);
+    default:
+      FATAL_UNSUPPORTED_OPCODE(opcode);
+  }
+}
 Node* WasmGraphBuilder::SimdOp(wasm::WasmOpcode opcode, Node* const* inputs) {
   has_simd_ = true;
   switch (opcode) {

@@ -391,6 +391,14 @@ struct GetSimdOpcodeSigIndex {
   }
 };
 
+struct GetSecretOpcodeSigIndex {
+  constexpr WasmOpcodeSig operator()(byte opcode) const {
+#define CASE(name, opc, sig) opcode == (opc & 0xFF) ? kSigEnum_##sig:
+    return FOREACH_SECRET_OPCODE(CASE) kSigEnum_None;
+#undef CASE
+  }
+};
+
 struct GetAtomicOpcodeSigIndex {
   constexpr WasmOpcodeSig operator()(byte opcode) const {
 #define CASE(name, opc, sig) opcode == (opc & 0xFF) ? kSigEnum_##sig:
@@ -413,6 +421,8 @@ constexpr std::array<WasmOpcodeSig, 256> kSimpleAsmjsExprSigTable =
     base::make_array<256>(GetAsmJsOpcodeSigIndex{});
 constexpr std::array<WasmOpcodeSig, 256> kSimdExprSigTable =
     base::make_array<256>(GetSimdOpcodeSigIndex{});
+constexpr std::array<WasmOpcodeSig, 256> kSecretExprSigTable =
+    base::make_array<256>(GetSecretOpcodeSigIndex{});
 constexpr std::array<WasmOpcodeSig, 256> kAtomicExprSigTable =
     base::make_array<256>(GetAtomicOpcodeSigIndex{});
 constexpr std::array<WasmOpcodeSig, 256> kNumericExprSigTable =
@@ -425,6 +435,9 @@ FunctionSig* WasmOpcodes::Signature(WasmOpcode opcode) {
     case kSimdPrefix:
       return const_cast<FunctionSig*>(
           kSimpleExprSigs[kSimdExprSigTable[opcode & 0xFF]]);
+    case kSecretPrefix:
+      return const_cast<FunctionSig*>(
+          kSimpleExprSigs[kSecretExprSigTable[opcode & 0xFF]]);
     case kAtomicPrefix:
       return const_cast<FunctionSig*>(
           kSimpleExprSigs[kAtomicExprSigTable[opcode & 0xFF]]);

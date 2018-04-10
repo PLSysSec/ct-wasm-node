@@ -26,6 +26,10 @@ MachineType MachineTypeFor(ValueType type) {
       return MachineType::Int32();
     case wasm::kWasmI64:
       return MachineType::Int64();
+    case wasm::kWasmS32:
+      return MachineType::Int32();
+    case wasm::kWasmS64:
+      return MachineType::Int64();
     case wasm::kWasmF64:
       return MachineType::Float64();
     case wasm::kWasmF32:

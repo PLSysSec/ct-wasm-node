@@ -434,6 +434,8 @@ class WasmGraphBuilder {
 
   Node* SimdOp(wasm::WasmOpcode opcode, Node* const* inputs);
 
+  Node* SecretOp(wasm::WasmOpcode opcode, Node* const* inputs);
+
   Node* SimdLaneOp(wasm::WasmOpcode opcode, uint8_t lane, Node* const* inputs);
 
   Node* SimdShiftOp(wasm::WasmOpcode opcode, uint8_t shift,

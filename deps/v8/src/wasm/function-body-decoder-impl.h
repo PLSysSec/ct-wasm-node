@@ -194,9 +194,15 @@ struct BlockTypeOperand {
         return true;
       case kLocalI32:
         *result = kWasmI32;
-        return true;
+      return true;
       case kLocalI64:
         *result = kWasmI64;
+        return true;
+      case kLocalS32:
+        *result = kWasmS32;
+        return true;
+      case kLocalS64:
+        *result = kWasmS64;
         return true;
       case kLocalF32:
         *result = kWasmF32;
@@ -567,6 +573,8 @@ struct ControlWithNamedConstructors : public ControlBase<Value> {
     const Value& rhs, Value* result)                                           \
   F(I32Const, Value* result, int32_t value)                                    \
   F(I64Const, Value* result, int64_t value)                                    \
+  F(S32Const, Value* result, int32_t value)                                    \
+  F(S64Const, Value* result, int64_t value)                                    \
   F(F32Const, Value* result, float value)                                      \
   F(F64Const, Value* result, double value)                                     \
   F(Drop, const Value& value)                                                  \
@@ -597,6 +605,7 @@ struct ControlWithNamedConstructors : public ControlBase<Value> {
     const CallIndirectOperand<validate>& operand, const Value args[],          \
     Value returns[])                                                           \
   F(SimdOp, WasmOpcode opcode, Vector<Value> args, Value* result)              \
+  F(SecretOp, WasmOpcode opcode, Vector<Value> args, Value* result)              \
   F(SimdLaneOp, WasmOpcode opcode, const SimdLaneOperand<validate>& operand,   \
     const Vector<Value> inputs, Value* result)                                 \
   F(SimdShiftOp, WasmOpcode opcode, const SimdShiftOperand<validate>& operand, \
@@ -663,6 +672,12 @@ class WasmDecoder : public Decoder {
           break;
         case kLocalI64:
           type = kWasmI64;
+          break;
+        case kLocalS32:
+          type = kWasmS32;
+          break;
+        case kLocalS64:
+          type = kWasmS64;
           break;
         case kLocalF32:
           type = kWasmF32;
@@ -1022,6 +1037,24 @@ class WasmDecoder : public Decoder {
             return 2;
         }
       }
+      case kSecretPrefix: {
+        byte secret_index = decoder->read_u8<validate>(pc + 1, "secret_index");
+        WasmOpcode opcode =
+            static_cast<WasmOpcode>(kSecretPrefix << 8 | secret_index);
+        switch (opcode) {
+#define DECLARE_OPCODE_CASE(name, opcode, sig) case kExpr##name:
+          FOREACH_SECRET_OPCODE(DECLARE_OPCODE_CASE)
+#undef DECLARE_OPCODE_CASE
+            return 2;
+          case kExprS32Const: {
+            ImmI32Operand<validate> operand(decoder, pc);
+            return 2 + operand.length;
+          }
+          default:
+            decoder->error(pc, "invalid Secrets opcode");
+            return 2;
+        }
+      }
       default:
         return 1;
     }
@@ -1055,6 +1088,7 @@ class WasmDecoder : public Decoder {
       case kExprGetLocal:
       case kExprGetGlobal:
       case kExprI32Const:
+      case kExprS32Const:
       case kExprI64Const:
       case kExprF32Const:
       case kExprF64Const:
@@ -1083,6 +1117,7 @@ class WasmDecoder : public Decoder {
         return {0, 0};
       case kNumericPrefix:
       case kAtomicPrefix:
+      case kSecretPrefix:
       case kSimdPrefix: {
         opcode = static_cast<WasmOpcode>(opcode << 8 | *(pc + 1));
         switch (opcode) {
@@ -1828,6 +1863,16 @@ class WasmFullDecoder : public WasmDecoder<validate> {
             len += DecodeAtomicOpcode(opcode);
             break;
           }
+          case kSecretPrefix: {
+            len++;
+            byte secret_index =
+                this->template read_u8<validate>(this->pc_ + 1, "secret index");
+            opcode = static_cast<WasmOpcode>(opcode << 8 | secret_index);
+            TRACE_PART(TRACE_INST_FORMAT, startrel(this->pc_),
+                       WasmOpcodes::OpcodeName(opcode));
+            len += DecodeSecretOpcode(opcode);
+            break;
+          }
           default: {
             // Deal with special asmjs opcodes.
             if (this->module_ != nullptr && this->module_->is_asm_js()) {
@@ -2127,6 +2172,31 @@ class WasmFullDecoder : public WasmDecoder<validate> {
         auto* results =
             sig->return_count() == 0 ? nullptr : Push(GetReturnType(sig));
         CALL_INTERFACE_IF_REACHABLE(SimdOp, opcode, vec2vec(args_), results);
+      }
+    }
+    return len;
+  }
+
+  unsigned DecodeSecretOpcode(WasmOpcode opcode) {
+    unsigned len = 0;
+    switch (opcode) {
+      case kExprI32Const: {
+        ImmI32Operand<validate> operand(this, this->pc_);
+        auto* value = Push(kWasmI32);
+        CALL_INTERFACE_IF_REACHABLE(I32Const, value, operand.value);
+        len = 1 + operand.length;
+        break;
+      }
+      default: {
+        FunctionSig* sig = WasmOpcodes::Signature(opcode);
+        if (!VALIDATE(sig != nullptr)) {
+          this->error("invalid secret opcode");
+          break;
+        }
+        PopArgs(sig);
+        auto* results =
+            sig->return_count() == 0 ? nullptr : Push(GetReturnType(sig));
+        CALL_INTERFACE_IF_REACHABLE(SecretOp, opcode, vec2vec(args_), results);
       }
     }
     return len;

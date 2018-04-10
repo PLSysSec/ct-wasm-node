@@ -19,6 +19,11 @@ namespace wasm {
 // A typedef improves readability without adding a whole new type system.
 class ValueType {
   public:
+    constexpr static ValueType FromRep(MachineRepresentation r) {
+      ValueType t;
+      t.v = static_cast<uint8_t>(r) + static_cast<uint8_t>(MachineRepresentation::kLastRepresentation);
+      return t;
+    }
     constexpr ValueType() : v(0) {}
     constexpr ValueType(MachineRepresentation v) : v(static_cast<uint8_t>(v)) {}
     constexpr explicit operator MachineRepresentation() const {
@@ -35,6 +40,8 @@ class ValueType {
 constexpr ValueType kWasmStmt = MachineRepresentation::kNone;
 constexpr ValueType kWasmI32 = MachineRepresentation::kWord32;
 constexpr ValueType kWasmI64 = MachineRepresentation::kWord64;
+constexpr ValueType kWasmS32 = ValueType::FromRep(MachineRepresentation::kWord32);
+constexpr ValueType kWasmS64 = ValueType::FromRep(MachineRepresentation::kWord64);
 constexpr ValueType kWasmF32 = MachineRepresentation::kFloat32;
 constexpr ValueType kWasmF64 = MachineRepresentation::kFloat64;
 constexpr ValueType kWasmS128 = MachineRepresentation::kSimd128;
@@ -78,6 +85,7 @@ using WasmName = Vector<const char>;
   V(SetGlobal, 0x24, _)        \
   V(I32Const, 0x41, _)         \
   V(I64Const, 0x42, _)         \
+  V(S32Const, 0xfb41, _)                  \
   V(F32Const, 0x43, _)         \
   V(F64Const, 0x44, _)
 
@@ -407,6 +415,35 @@ using WasmName = Vector<const char>;
   V(I8x16ShrS, 0xfd63, _)                \
   V(I8x16ShrU, 0xfd71, _)
 
+#define FOREACH_SECRET_OPCODE(V)  \
+  V(S32Eqz, 0xfb45, sec_sec)            \
+  V(S32Eq, 0xfb46, sec_secsec)            \
+  V(S32Ne, 0xfb47, sec_secsec)            \
+  V(S32LtS, 0xfb48, sec_secsec)           \
+  V(S32LtU, 0xfb49, sec_secsec)           \
+  V(S32GtS, 0xfb4a, sec_secsec)           \
+  V(S32GtU, 0xfb4b, sec_secsec)           \
+  V(S32LeS, 0xfb4c, sec_secsec)           \
+  V(S32LeU, 0xfb4d, sec_secsec)           \
+  V(S32GeS, 0xfb4e, sec_secsec)           \
+  V(S32GeU, 0xfb4f, sec_secsec)           \
+  V(S32Clz, 0xfb67, sec_sec)            \
+  V(S32Ctz, 0xfb68, sec_sec)            \
+  V(S32Popcnt, 0xfb69, sec_sec)         \
+  V(S32Add, 0xfb6a, sec_secsec)           \
+  V(S32Sub, 0xfb6b, sec_secsec)           \
+  V(S32Mul, 0xfb6c, sec_secsec)           \
+  V(S32RemS, 0xfb6f, sec_secsec)          \
+  V(S32RemU, 0xfb70, sec_secsec)          \
+  V(S32And, 0xfb71, sec_secsec)           \
+  V(S32Ior, 0xfb72, sec_secsec)           \
+  V(S32Xor, 0xfb73, sec_secsec)           \
+  V(S32Shl, 0xfb74, sec_secsec)           \
+  V(S32ShrS, 0xfb75, sec_secsec)          \
+  V(S32ShrU, 0xfb76, sec_secsec)          \
+  V(S32Rol, 0xfb77, sec_secsec)           \
+  V(S32Ror, 0xfb78, sec_secsec)
+
 #define FOREACH_SIMD_MASK_OPERAND_OPCODE(V) V(S8x16Shuffle, 0xfd6b, s_ss)
 
 #define FOREACH_SIMD_MEM_OPCODE(V) \
@@ -458,6 +495,7 @@ using WasmName = Vector<const char>;
   FOREACH_LOAD_MEM_OPCODE(V)          \
   FOREACH_MISC_MEM_OPCODE(V)          \
   FOREACH_ASMJS_COMPAT_OPCODE(V)      \
+  FOREACH_SECRET_OPCODE(V)    \
   FOREACH_SIMD_0_OPERAND_OPCODE(V)    \
   FOREACH_SIMD_1_OPERAND_OPCODE(V)    \
   FOREACH_SIMD_MASK_OPERAND_OPCODE(V) \
@@ -467,6 +505,7 @@ using WasmName = Vector<const char>;
 
 // All signatures.
 #define FOREACH_SIGNATURE(V)             \
+  FOREACH_SECRET_SIGNATURE(V)            \
   FOREACH_SIMD_SIGNATURE(V)              \
   V(i_ii, kWasmI32, kWasmI32, kWasmI32)  \
   V(i_i, kWasmI32, kWasmI32)             \
@@ -500,6 +539,11 @@ using WasmName = Vector<const char>;
   V(v_il, kWasmI64, kWasmI32, kWasmI64)  \
   V(i_iii, kWasmI32, kWasmI32, kWasmI32, kWasmI32)
 
+#define FOREACH_SECRET_SIGNATURE(V)         \
+  V(sec_sec, kWasmS32, kWasmS32)            \
+  V(i_sec, kWasmI32, kWasmS32)              \
+  V(sec_secsec, kWasmS32, kWasmS32, kWasmS32)
+
 #define FOREACH_SIMD_SIGNATURE(V)          \
   V(s_s, kWasmS128, kWasmS128)             \
   V(s_f, kWasmS128, kWasmF32)              \
@@ -510,6 +554,7 @@ using WasmName = Vector<const char>;
   V(s_sss, kWasmS128, kWasmS128, kWasmS128, kWasmS128)
 
 #define FOREACH_PREFIX(V) \
+  V(Secret, 0xfb)         \
   V(Numeric, 0xfc)        \
   V(Simd, 0xfd)           \
   V(Atomic, 0xfe)
@@ -680,6 +725,10 @@ class V8_EXPORT_PRIVATE WasmOpcodes {
         return kLocalI32;
       case kWasmI64:
         return kLocalI64;
+      case kWasmS32:
+        return kLocalS32;
+      case kWasmS64:
+        return kLocalS64;
       case kWasmF32:
         return kLocalF32;
       case kWasmF64:
@@ -698,6 +747,10 @@ class V8_EXPORT_PRIVATE WasmOpcodes {
       case kWasmI32:
         return MachineType::Int32();
       case kWasmI64:
+        return MachineType::Int64();
+      case kWasmS32:
+        return MachineType::Int32();
+      case kWasmS64:
         return MachineType::Int64();
       case kWasmF32:
         return MachineType::Float32();
@@ -758,6 +811,10 @@ class V8_EXPORT_PRIVATE WasmOpcodes {
         return "i32";
       case kWasmI64:
         return "i64";
+      case kWasmS32:
+        return "s32";
+      case kWasmS64:
+        return "s64";
       case kWasmF32:
         return "f32";
       case kWasmF64:
@@ -781,6 +838,8 @@ struct WasmInitExpr {
     kGlobalIndex,
     kI32Const,
     kI64Const,
+    kS32Const,
+    kS64Const,
     kF32Const,
     kF64Const
   } kind;
@@ -794,7 +853,8 @@ struct WasmInitExpr {
   } val;
 
   WasmInitExpr() : kind(kNone) {}
-  explicit WasmInitExpr(int32_t v) : kind(kI32Const) { val.i32_const = v; }
+  explicit WasmInitExpr(int64_t v, bool sec=false) : kind(sec ? kS64Const : kI64Const) { val.i64_const = v; }
+  explicit WasmInitExpr(int32_t v, bool sec=false) : kind(sec ? kS32Const : kI32Const) { val.i32_const = v; }
   explicit WasmInitExpr(int64_t v) : kind(kI64Const) { val.i64_const = v; }
   explicit WasmInitExpr(float v) : kind(kF32Const) { val.f32_const = v; }
   explicit WasmInitExpr(double v) : kind(kF64Const) { val.f64_const = v; }

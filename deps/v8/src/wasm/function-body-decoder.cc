@@ -223,6 +223,10 @@ class WasmGraphBuildingInterface {
     result->node = builder_->Int32Constant(value);
   }
 
+  void S32Const(Decoder* decoder, Value* result, int32_t value) {
+    result->node = builder_->Int32Constant(value);
+  }
+
   void I64Const(Decoder* decoder, Value* result, int64_t value) {
     result->node = builder_->Int64Constant(value);
   }
@@ -382,6 +386,13 @@ class WasmGraphBuildingInterface {
               Value* result) {
     TFNode** inputs = GetNodes(args);
     TFNode* node = BUILD(SimdOp, opcode, inputs);
+    if (result) result->node = node;
+  }
+
+  void SecretOp(Decoder* decoder, WasmOpcode opcode, Vector<Value> args,
+              Value* result) {
+    TFNode** inputs = GetNodes(args);
+    TFNode* node = BUILD(SecretOp, opcode, inputs);
     if (result) result->node = node;
   }
 
@@ -591,6 +602,10 @@ class WasmGraphBuildingInterface {
       case kWasmI32:
         return builder_->Int32Constant(0);
       case kWasmI64:
+        return builder_->Int64Constant(0);
+      case kWasmS32:
+        return builder_->Int32Constant(0);
+      case kWasmS64:
         return builder_->Int64Constant(0);
       case kWasmF32:
         return builder_->Float32Constant(0);

@@ -16,12 +16,9 @@ async function testPubSum() {
 
 async function testSecSum() {
   let b = await readFileAsync(__dirname + '/s32.wasm');
-  try {
-    let m = await WebAssembly.instantiate(b, {});
-  } catch(_) {
-    return;
-  }
-  assert.fail("Secrets shouldn't compile (yet)")
+  let m = await WebAssembly.instantiate(b, {});
+  let s = m.instance.exports.add(3,4);
+  assert(s === 7, 'secret addition is broken');
 }
 
 

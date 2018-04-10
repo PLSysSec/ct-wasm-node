@@ -244,12 +244,14 @@ class InterpreterHandle {
       WasmValue ret_val = thread->GetReturnValue(0);
 #define CASE_RET_TYPE(type, ctype)                                       \
   case type:                                                             \
-    DCHECK_EQ(1 << ElementSizeLog2Of(sig->GetReturn(0)), sizeof(ctype)); \
+    DCHECK_EQ(1 << ElementSizeLog2Of(MachineRepresentation(sig->GetReturn(0))), sizeof(ctype)); \
     WriteUnalignedValue<ctype>(arg_buffer, ret_val.to<ctype>());         \
     break;
       switch (sig->GetReturn(0)) {
         CASE_RET_TYPE(kWasmI32, uint32_t)
         CASE_RET_TYPE(kWasmI64, uint64_t)
+        CASE_RET_TYPE(kWasmS32, uint32_t)
+        CASE_RET_TYPE(kWasmS64, uint64_t)
         CASE_RET_TYPE(kWasmF32, float)
         CASE_RET_TYPE(kWasmF64, double)
 #undef CASE_RET_TYPE

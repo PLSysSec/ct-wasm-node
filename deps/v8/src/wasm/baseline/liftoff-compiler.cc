@@ -977,6 +977,10 @@ class LiftoffCompiler {
               Value* result) {
     unsupported(decoder, "simd");
   }
+  void SecretOp(Decoder* decoder, WasmOpcode opcode, Vector<Value> args,
+              Value* result) {
+    unsupported(decoder, "secret");
+  }
   void SimdLaneOp(Decoder* decoder, WasmOpcode opcode,
                   const SimdLaneOperand<validate>& operand,
                   const Vector<Value> inputs, Value* result) {
