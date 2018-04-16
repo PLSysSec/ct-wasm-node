@@ -86,6 +86,7 @@ using WasmName = Vector<const char>;
   V(I32Const, 0x41, _)         \
   V(I64Const, 0x42, _)         \
   V(S32Const, 0xfb41, _)                  \
+  V(S64Const, 0xfb42, _)                  \
   V(F32Const, 0x43, _)         \
   V(F64Const, 0x44, _)
 
@@ -415,34 +416,64 @@ using WasmName = Vector<const char>;
   V(I8x16ShrS, 0xfd63, _)                \
   V(I8x16ShrU, 0xfd71, _)
 
-#define FOREACH_SECRET_OPCODE(V)  \
-  V(S32Eqz, 0xfb45, sec_sec)            \
-  V(S32Eq, 0xfb46, sec_secsec)            \
-  V(S32Ne, 0xfb47, sec_secsec)            \
-  V(S32LtS, 0xfb48, sec_secsec)           \
-  V(S32LtU, 0xfb49, sec_secsec)           \
-  V(S32GtS, 0xfb4a, sec_secsec)           \
-  V(S32GtU, 0xfb4b, sec_secsec)           \
-  V(S32LeS, 0xfb4c, sec_secsec)           \
-  V(S32LeU, 0xfb4d, sec_secsec)           \
-  V(S32GeS, 0xfb4e, sec_secsec)           \
-  V(S32GeU, 0xfb4f, sec_secsec)           \
-  V(S32Clz, 0xfb67, sec_sec)            \
-  V(S32Ctz, 0xfb68, sec_sec)            \
-  V(S32Popcnt, 0xfb69, sec_sec)         \
-  V(S32Add, 0xfb6a, sec_secsec)           \
-  V(S32Sub, 0xfb6b, sec_secsec)           \
-  V(S32Mul, 0xfb6c, sec_secsec)           \
-  V(S32RemS, 0xfb6f, sec_secsec)          \
-  V(S32RemU, 0xfb70, sec_secsec)          \
-  V(S32And, 0xfb71, sec_secsec)           \
-  V(S32Ior, 0xfb72, sec_secsec)           \
-  V(S32Xor, 0xfb73, sec_secsec)           \
-  V(S32Shl, 0xfb74, sec_secsec)           \
-  V(S32ShrS, 0xfb75, sec_secsec)          \
-  V(S32ShrU, 0xfb76, sec_secsec)          \
-  V(S32Rol, 0xfb77, sec_secsec)           \
-  V(S32Ror, 0xfb78, sec_secsec)
+#define FOREACH_SECRET_OPCODE(V)      \
+  V(S32Eqz, 0xfb45, sec_sec)          \
+  V(S32Eq, 0xfb46, sec_secsec)        \
+  V(S32Ne, 0xfb47, sec_secsec)        \
+  V(S32LtS, 0xfb48, sec_secsec)       \
+  V(S32LtU, 0xfb49, sec_secsec)       \
+  V(S32GtS, 0xfb4a, sec_secsec)       \
+  V(S32GtU, 0xfb4b, sec_secsec)       \
+  V(S32LeS, 0xfb4c, sec_secsec)       \
+  V(S32LeU, 0xfb4d, sec_secsec)       \
+  V(S32GeS, 0xfb4e, sec_secsec)       \
+  V(S32GeU, 0xfb4f, sec_secsec)       \
+  V(S32Clz, 0xfb67, sec_sec)          \
+  V(S32Ctz, 0xfb68, sec_sec)          \
+  V(S32Popcnt, 0xfb69, sec_sec)       \
+  V(S32Add, 0xfb6a, sec_secsec)       \
+  V(S32Sub, 0xfb6b, sec_secsec)       \
+  V(S32Mul, 0xfb6c, sec_secsec)       \
+  V(S32RemS, 0xfb6f, sec_secsec)      \
+  V(S32RemU, 0xfb70, sec_secsec)      \
+  V(S32And, 0xfb71, sec_secsec)       \
+  V(S32Ior, 0xfb72, sec_secsec)       \
+  V(S32Xor, 0xfb73, sec_secsec)       \
+  V(S32Shl, 0xfb74, sec_secsec)       \
+  V(S32ShrS, 0xfb75, sec_secsec)      \
+  V(S32ShrU, 0xfb76, sec_secsec)      \
+  V(S32Rol, 0xfb77, sec_secsec)       \
+  V(S32Ror, 0xfb78, sec_secsec)       \
+  V(S64Eqz, 0xfb50, sec_lsec)         \
+  V(S64Eq, 0xfb51, sec_lseclsec)      \
+  V(S64Ne, 0xfb52, sec_lseclsec)      \
+  V(S64LtS, 0xfb53, sec_lseclsec)     \
+  V(S64LtU, 0xfb54, sec_lseclsec)     \
+  V(S64GtS, 0xfb55, sec_lseclsec)     \
+  V(S64GtU, 0xfb56, sec_lseclsec)     \
+  V(S64LeS, 0xfb57, sec_lseclsec)     \
+  V(S64LeU, 0xfb58, sec_lseclsec)     \
+  V(S64GeS, 0xfb59, sec_lseclsec)     \
+  V(S64GeU, 0xfb5a, sec_lseclsec)     \
+  V(S64Clz, 0xfb79, lsec_lsec)        \
+  V(S64Ctz, 0xfb7a, lsec_lsec)        \
+  V(S64Popcnt, 0xfb7b, lsec_lsec)     \
+  V(S64Add, 0xfb7c, lsec_lseclsec)    \
+  V(S64Sub, 0xfb7d, lsec_lseclsec)    \
+  V(S64Mul, 0xfb7e, lsec_lseclsec)    \
+  V(S64And, 0xfb83, lsec_lseclsec)    \
+  V(S64Ior, 0xfb84, lsec_lseclsec)    \
+  V(S64Xor, 0xfb85, lsec_lseclsec)    \
+  V(S64Shl, 0xfb86, lsec_lseclsec)    \
+  V(S64ShrS, 0xfb87, lsec_lseclsec)    \
+  V(S64ShrU, 0xfb88, lsec_lseclsec)    \
+  V(S64Rol, 0xfb89, lsec_lseclsec)    \
+  V(S64Ror, 0xfb8a, lsec_lseclsec)    \
+  V(S32ConvertS64, 0xfba7, sec_lsec)     \
+  V(S64SConvertS32, 0xfbac, lsec_sec) \
+  V(S64UConvertS32, 0xfbad, lsec_sec) \
+  V(S32ClassifyI32, 0xfbc0, sec_i)    \
+  V(S64ClassifyI64, 0xfbc1, lsec_l)
 
 #define FOREACH_SIMD_MASK_OPERAND_OPCODE(V) V(S8x16Shuffle, 0xfd6b, s_ss)
 
@@ -539,10 +570,16 @@ using WasmName = Vector<const char>;
   V(v_il, kWasmI64, kWasmI32, kWasmI64)  \
   V(i_iii, kWasmI32, kWasmI32, kWasmI32, kWasmI32)
 
-#define FOREACH_SECRET_SIGNATURE(V)         \
-  V(sec_sec, kWasmS32, kWasmS32)            \
-  V(i_sec, kWasmI32, kWasmS32)              \
-  V(sec_secsec, kWasmS32, kWasmS32, kWasmS32)
+#define FOREACH_SECRET_SIGNATURE(V)           \
+  V(sec_sec, kWasmS32, kWasmS32)              \
+  V(sec_i, kWasmS32, kWasmI32)                \
+  V(sec_secsec, kWasmS32, kWasmS32, kWasmS32) \
+  V(sec_lsec, kWasmS32, kWasmS64)             \
+  V(lsec_sec, kWasmS64, kWasmS32)             \
+  V(lsec_l, kWasmS64, kWasmI64)               \
+  V(lsec_lsec, kWasmS64, kWasmS64)            \
+  V(lsec_lseclsec, kWasmS64, kWasmS64, kWasmS64) \
+  V(sec_lseclsec, kWasmS32, kWasmS64, kWasmS64)\
 
 #define FOREACH_SIMD_SIGNATURE(V)          \
   V(s_s, kWasmS128, kWasmS128)             \

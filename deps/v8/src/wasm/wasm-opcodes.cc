@@ -335,7 +335,7 @@ std::ostream& operator<<(std::ostream& os, const FunctionSig& sig) {
 
 bool IsJSCompatibleSignature(const FunctionSig* sig) {
   for (auto type : sig->all()) {
-    if (type == wasm::kWasmI64 || type == wasm::kWasmS128) return false;
+    if (type == wasm::kWasmI64 || type == wasm::kWasmS64 || type == wasm::kWasmS128) return false;
   }
   return sig->return_count() <= 1;
 }

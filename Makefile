@@ -1,6 +1,6 @@
 -include config.mk
 
-BUILDTYPE ?= Release
+BUILDTYPE ?= Debug
 PYTHON ?= python
 DESTDIR ?=
 SIGN ?=
@@ -499,8 +499,18 @@ test-node-inspect: $(NODE_EXE)
 test-tick-processor: all
 	$(PYTHON) tools/test.py tick-processor
 
-test-ct-wasm: all
-	$(PYTHON) tools/test.py ct-wasm
+ct-wasm:
+	which wasm
+
+%.wasm: %.wast
+	wasm -d -i $< -o $@
+
+WASTS = $(wildcard test/ct-wasm/*.wast)
+WASMS = $(WASTS:.wast=.wasm)
+# WASMS := $(patsubst %.wast, %.wasm, $(WASTS))
+
+test-ct-wasm: ct-wasm $(WASMS)
+	$(PYTHON) tools/test.py --mode=debug ct-wasm
 
 .PHONY: test-hash-seed
 # Verifies the hash seed used by V8 for hashing is random.

@@ -1342,7 +1342,7 @@ Node* WasmGraphBuilder::BuildChangeEndiannessLoad(Node* node,
       // Perform sign extension using following trick
       // result = (x << machine_width - type_width) >> (machine_width -
       // type_width)
-      if (wasmtype == wasm::kWasmI64) {
+      if (wasmtype == wasm::kWasmI64 || wasmtype == wasm::kWasmS64) {
         shiftBitCount = jsgraph()->Int32Constant(64 - valueSizeInBits);
         result = graph()->NewNode(
             m->Word64Sar(),
@@ -3167,7 +3167,7 @@ bool WasmGraphBuilder::BuildWasmToJSWrapper(
 namespace {
 bool HasInt64ParamOrReturn(wasm::FunctionSig* sig) {
   for (auto type : sig->all()) {
-    if (type == wasm::kWasmI64) return true;
+    if (type == wasm::kWasmI64 || type == wasm::kWasmS64) return true;
   }
   return false;
 }
@@ -3803,7 +3803,7 @@ Node* WasmGraphBuilder::LoadMem(wasm::ValueType type, MachineType memtype,
   load = BuildChangeEndiannessLoad(load, memtype, type);
 #endif
 
-  if (type == wasm::kWasmI64 &&
+  if ((type == wasm::kWasmI64 || type == wasm::kWasmS64) &&
       ElementSizeLog2Of(memtype.representation()) < 3) {
     // TODO(titzer): TF zeroes the upper bits of 64-bit loads for subword sizes.
     if (memtype.IsSigned()) {
@@ -4088,6 +4088,96 @@ Node* WasmGraphBuilder::SecretOp(wasm::WasmOpcode opcode, Node* const* inputs) {
       return graph()->NewNode(m->Uint32LessThan(), inputs[1], inputs[0]);
     case wasm::kExprS32GeU:
       return graph()->NewNode(m->Uint32LessThanOrEqual(), inputs[1], inputs[0]);
+
+    // S64 Unops
+    case wasm::kExprS32ConvertS64:
+      return graph()->NewNode(m->TruncateInt64ToInt32(), inputs[0]);
+    case wasm::kExprS64SConvertS32:
+      return graph()->NewNode(m->ChangeInt32ToInt64(), inputs[0]);
+    case wasm::kExprS64UConvertS32:
+      return graph()->NewNode(m->ChangeUint32ToUint64(), inputs[0]);
+    case wasm::kExprS64Clz:
+      return graph()->NewNode(m->Word64Clz(), inputs[0]);
+    case wasm::kExprS64Ctz: {
+      OptionalOperator ctz64 = m->Word64Ctz();
+      if (ctz64.IsSupported()) {
+        return graph()->NewNode(ctz64.op(), inputs[0]);
+        break;
+      } else if (m->Is32() && m->Word32Ctz().IsSupported()) {
+        return graph()->NewNode(ctz64.placeholder(), inputs[0]);
+      } else if (m->Word64ReverseBits().IsSupported()) {
+        Node* reversed = graph()->NewNode(m->Word64ReverseBits().op(), inputs[0]);
+        Node* result = graph()->NewNode(m->Word64Clz(), reversed);
+        return result;
+      } else {
+        return BuildI64Ctz(inputs[0]);
+      }
+    }
+    case wasm::kExprS64Popcnt: {
+      OptionalOperator popcnt64 = m->Word64Popcnt();
+      if (popcnt64.IsSupported()) {
+        return graph()->NewNode(popcnt64.op(), inputs[0]);
+      } else if (m->Is32() && m->Word32Popcnt().IsSupported()) {
+        return graph()->NewNode(popcnt64.placeholder(), inputs[0]);
+      } else {
+        return BuildI64Popcnt(inputs[0]);
+      }
+      break;
+    }
+
+    // S64 Binops
+    case wasm::kExprS64And:
+      return graph()->NewNode(m->Word64And(), inputs[0], inputs[1]);
+    case wasm::kExprS64Add:
+      return graph()->NewNode(m->Int64Add(), inputs[0], inputs[1]);
+    case wasm::kExprS64Sub:
+      return graph()->NewNode(m->Int64Sub(), inputs[0], inputs[1]);
+    case wasm::kExprS64Mul:
+      return graph()->NewNode(m->Int64Mul(), inputs[0], inputs[1]);
+    case wasm::kExprS64Ior:
+      return graph()->NewNode(m->Word64Or(), inputs[0], inputs[1]);
+    case wasm::kExprS64Xor:
+      return graph()->NewNode(m->Word64Xor(), inputs[0], inputs[1]);
+    case wasm::kExprS64Shl:
+      return graph()->NewNode(m->Word64Shl(), inputs[0], MaskShiftCount64(inputs[1]));
+      break;
+    case wasm::kExprS64ShrU:
+      return graph()->NewNode(m->Word64Shr(), inputs[0], MaskShiftCount64(inputs[1]));
+      break;
+    case wasm::kExprS64ShrS:
+      return graph()->NewNode(m->Word64Sar(), inputs[0], MaskShiftCount64(inputs[1]));
+      break;
+    case wasm::kExprS64Eq:
+      return graph()->NewNode(m->Word64Equal(), inputs[0], inputs[1]);
+    case wasm::kExprS64Ne:
+      return Invert(SecretOp(wasm::kExprS64Eq, inputs));
+    case wasm::kExprS64LtS:
+      return graph()->NewNode(m->Int64LessThan(), inputs[0], inputs[1]);
+    case wasm::kExprS64LeS:
+      return graph()->NewNode(m->Int64LessThanOrEqual(), inputs[0], inputs[1]);
+    case wasm::kExprS64LtU:
+      return graph()->NewNode(m->Uint64LessThan(), inputs[0], inputs[1]);
+    case wasm::kExprS64LeU:
+      return graph()->NewNode(m->Uint64LessThanOrEqual(), inputs[0], inputs[1]);
+    case wasm::kExprS64GtS:
+      return graph()->NewNode(m->Int64LessThan(), inputs[1], inputs[0]);
+      break;
+    case wasm::kExprS64GeS:
+      return graph()->NewNode(m->Int64LessThanOrEqual(), inputs[1], inputs[0]);
+      break;
+    case wasm::kExprS64GtU:
+      return graph()->NewNode(m->Uint64LessThan(), inputs[1], inputs[0]);
+      break;
+    case wasm::kExprS64GeU:
+      return graph()->NewNode(m->Uint64LessThanOrEqual(), inputs[1], inputs[0]);
+      break;
+    case wasm::kExprS64Ror:
+      return graph()->NewNode(m->Word64Ror(), inputs[0], MaskShiftCount64(inputs[1]));
+      break;
+    case wasm::kExprS64Rol:
+      return BuildI64Rol(inputs[0], inputs[1]);
+    case wasm::kExprS64Eqz:
+      return graph()->NewNode(m->Word64Equal(), inputs[0], jsgraph()->Int64Constant(0));
     default:
       FATAL_UNSUPPORTED_OPCODE(opcode);
   }

@@ -2180,10 +2180,17 @@ class WasmFullDecoder : public WasmDecoder<validate> {
   unsigned DecodeSecretOpcode(WasmOpcode opcode) {
     unsigned len = 0;
     switch (opcode) {
-      case kExprI32Const: {
+      case kExprS32Const: {
         ImmI32Operand<validate> operand(this, this->pc_);
-        auto* value = Push(kWasmI32);
-        CALL_INTERFACE_IF_REACHABLE(I32Const, value, operand.value);
+        auto* value = Push(kWasmS32);
+        CALL_INTERFACE_IF_REACHABLE(S32Const, value, operand.value);
+        len = 1 + operand.length;
+        break;
+      }
+      case kExprS64Const: {
+        ImmI64Operand<validate> operand(this, this->pc_);
+        auto* value = Push(kWasmS64);
+        CALL_INTERFACE_IF_REACHABLE(S64Const, value, operand.value);
         len = 1 + operand.length;
         break;
       }

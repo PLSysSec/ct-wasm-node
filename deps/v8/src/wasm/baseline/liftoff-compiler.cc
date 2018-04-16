@@ -576,6 +576,14 @@ class LiftoffCompiler {
     unsupported(decoder, "i64.const");
   }
 
+  void S32Const(Decoder* decoder, Value* result, int32_t value) {
+    unsupported(decoder, "f64.const");
+  }
+
+  void S64Const(Decoder* decoder, Value* result, int32_t value) {
+    unsupported(decoder, "f64.const");
+  }
+
   void F32Const(Decoder* decoder, Value* result, float value) {
     LiftoffRegister reg = __ GetUnusedRegister(kFpReg);
     __ LoadConstant(reg, WasmValue(value));

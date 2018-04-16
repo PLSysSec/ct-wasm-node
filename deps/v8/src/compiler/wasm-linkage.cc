@@ -204,7 +204,7 @@ struct Allocator {
   }
   int Words(ValueType type) {
     if (kPointerSize < 8 &&
-        (type == wasm::kWasmI64 || type == wasm::kWasmF64)) {
+        (type == wasm::kWasmI64 || type ==wasm::kWasmS64 || type == wasm::kWasmF64)) {
       return 2;
     }
     return 1;
