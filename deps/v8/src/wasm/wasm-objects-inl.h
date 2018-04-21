@@ -39,6 +39,8 @@ ACCESSORS(WasmMemoryObject, array_buffer, JSArrayBuffer, kArrayBufferOffset)
 SMI_ACCESSORS(WasmMemoryObject, maximum_pages, kMaximumPagesOffset)
 OPTIONAL_ACCESSORS(WasmMemoryObject, instances, WeakFixedArray,
                    kInstancesOffset)
+SMI_ACCESSORS(WasmMemoryObject, flag, kFlagOffset)
+BOOL_ACCESSORS(WasmMemoryObject, flag, is_secret, 0);
 
 // WasmInstanceObject
 ACCESSORS(WasmInstanceObject, wasm_context, Managed<WasmContext>,

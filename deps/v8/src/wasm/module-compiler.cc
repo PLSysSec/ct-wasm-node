@@ -2444,7 +2444,7 @@ MaybeHandle<WasmInstanceObject> InstanceBuilder::Build() {
       // No memory object exists. Create one.
       Handle<WasmMemoryObject> memory_object = WasmMemoryObject::New(
           isolate_, memory_,
-          module_->maximum_pages != 0 ? module_->maximum_pages : -1);
+          module_->maximum_pages != 0 ? module_->maximum_pages : -1, module_->has_secret_memory);
       instance->set_memory_object(*memory_object);
     }
 
@@ -3038,6 +3038,13 @@ int InstanceBuilder::ProcessImports(Handle<FixedArray> code_table,
                 index, imported_maximum_pages, module_->maximum_pages);
             return -1;
           }
+        }
+        if (module_->has_secret_memory != memory->is_secret()) {
+          thrower_->LinkError(
+              "mismatch in secret state of memory, declared = %d, imported = "
+              "%d",
+              module_->has_secret_memory, memory->is_secret());
+          return -1;
         }
         if (module_->has_shared_memory != buffer->is_shared()) {
           thrower_->LinkError(

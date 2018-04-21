@@ -475,6 +475,34 @@ using WasmName = Vector<const char>;
   V(S32ClassifyI32, 0xfbc0, sec_i)    \
   V(S64ClassifyI64, 0xfbc1, lsec_l)
 
+#define FOREACH_SECRET_LOAD_OPCODE(V) \
+  V(S32LoadMem, 0xfb28, sec_i)         \
+  V(S64LoadMem, 0xfb29, lsec_i)         \
+  V(S32LoadMem8S, 0xfb2c, sec_i)       \
+  V(S32LoadMem8U, 0xfb2d, sec_i)       \
+  V(S32LoadMem16S, 0xfb2e, sec_i)      \
+  V(S32LoadMem16U, 0xfb2f, sec_i)      \
+  V(S64LoadMem8S, 0xfb30, lsec_i)       \
+  V(S64LoadMem8U, 0xfb31, lsec_i)       \
+  V(S64LoadMem16S, 0xfb32, lsec_i)      \
+  V(S64LoadMem16U, 0xfb33, lsec_i)      \
+  V(S64LoadMem32S, 0xfb34, lsec_i)      \
+  V(S64LoadMem32U, 0xfb35, lsec_i)
+
+#define FOREACH_SECRET_STORE_OPCODE(V) \
+  V(S32StoreMem, 0xfb36, v_isec)       \
+  V(S64StoreMem, 0xfb37, v_ilsec)       \
+  V(S32StoreMem8, 0xfb3a, v_isec)      \
+  V(S32StoreMem16, 0xfb3b, v_isec)     \
+  V(S64StoreMem8, 0xfb3c, v_ilsec)      \
+  V(S64StoreMem16, 0xfb3d, v_ilsec)     \
+  V(S64StoreMem32, 0xfb3e, v_ilsec)
+
+#define FOREACH_SECRET_MEM_OPCODE(V) \
+  FOREACH_SECRET_LOAD_OPCODE(V) \
+  FOREACH_SECRET_STORE_OPCODE(V)
+
+
 #define FOREACH_SIMD_MASK_OPERAND_OPCODE(V) V(S8x16Shuffle, 0xfd6b, s_ss)
 
 #define FOREACH_SIMD_MEM_OPCODE(V) \
@@ -532,7 +560,8 @@ using WasmName = Vector<const char>;
   FOREACH_SIMD_MASK_OPERAND_OPCODE(V) \
   FOREACH_SIMD_MEM_OPCODE(V)          \
   FOREACH_ATOMIC_OPCODE(V)            \
-  FOREACH_NUMERIC_OPCODE(V)
+  FOREACH_NUMERIC_OPCODE(V)           \
+  FOREACH_SECRET_MEM_OPCODE(V)
 
 // All signatures.
 #define FOREACH_SIGNATURE(V)             \
@@ -577,6 +606,9 @@ using WasmName = Vector<const char>;
   V(sec_lsec, kWasmS32, kWasmS64)             \
   V(lsec_sec, kWasmS64, kWasmS32)             \
   V(lsec_l, kWasmS64, kWasmI64)               \
+  V(lsec_i, kWasmS64, kWasmI32)               \
+  V(v_isec, kWasmStmt, kWasmI32, kWasmS32)               \
+  V(v_ilsec, kWasmStmt, kWasmI32, kWasmS64)               \
   V(lsec_lsec, kWasmS64, kWasmS64)            \
   V(lsec_lseclsec, kWasmS64, kWasmS64, kWasmS64) \
   V(sec_lseclsec, kWasmS32, kWasmS64, kWasmS64)\
@@ -624,9 +656,24 @@ enum TrapReason {
 #undef DECLARE_ENUM
 };
 
+#define FOREACH_SECRET_LOAD_TYPE(V) \
+  V(S32, , Int32, 2)         \
+  V(S32, 8S, Int8, 0)        \
+  V(S32, 8U, Uint8, 0)       \
+  V(S32, 16S, Int16, 1)      \
+  V(S32, 16U, Uint16, 1)     \
+  V(S64, , Int64, 3)         \
+  V(S64, 8S, Int8, 0)        \
+  V(S64, 8U, Uint8, 0)       \
+  V(S64, 16S, Int16, 1)      \
+  V(S64, 16U, Uint16, 1)     \
+  V(S64, 32S, Int32, 2)      \
+  V(S64, 32U, Uint32, 2)     \
+
 // TODO(clemensh): Compute memtype and size from ValueType once we have c++14
 // constexpr support.
 #define FOREACH_LOAD_TYPE(V) \
+  FOREACH_SECRET_LOAD_TYPE(V) \
   V(I32, , Int32, 2)         \
   V(I32, 8S, Int8, 0)        \
   V(I32, 8U, Uint8, 0)       \
@@ -660,7 +707,16 @@ class LoadType {
   constexpr unsigned size() const { return 1 << size_log_2(); }
   constexpr ValueType value_type() const { return kValueType[val_]; }
   constexpr MachineType mem_type() const { return kMemType[val_]; }
-
+  constexpr bool secret() const {
+    switch(val_){
+      #define CASE_ENUM(type, suffix, ...) case k##type##Load##suffix:
+        FOREACH_SECRET_LOAD_TYPE(CASE_ENUM)
+      #undef CASE_ENUM
+        return true;
+      default:
+        return false;
+    }
+  }
  private:
   const LoadTypeValue val_;
 
@@ -683,7 +739,17 @@ class LoadType {
   };
 };
 
+#define FOREACH_SECRET_STORE_TYPE(V) \
+  V(S32, , Word32, 2)         \
+  V(S32, 8, Word8, 0)         \
+  V(S32, 16, Word16, 1)       \
+  V(S64, , Word64, 3)         \
+  V(S64, 8, Word8, 0)         \
+  V(S64, 16, Word16, 1)       \
+  V(S64, 32, Word32, 2)       \
+
 #define FOREACH_STORE_TYPE(V) \
+  FOREACH_SECRET_STORE_TYPE(V) \
   V(I32, , Word32, 2)         \
   V(I32, 8, Word8, 0)         \
   V(I32, 16, Word16, 1)       \
@@ -712,7 +778,16 @@ class StoreType {
   constexpr unsigned size() const { return 1 << size_log_2(); }
   constexpr ValueType value_type() const { return kValueType[val_]; }
   constexpr ValueType mem_rep() const { return kMemRep[val_]; }
-
+  constexpr bool secret() const {
+    switch(val_){
+      #define CASE_ENUM(type, suffix, ...) case k##type##Store##suffix:
+        FOREACH_SECRET_STORE_TYPE(CASE_ENUM)
+      #undef CASE_ENUM
+        return true;
+      default:
+        return false;
+    }
+  }
  private:
   const StoreTypeValue val_;
 

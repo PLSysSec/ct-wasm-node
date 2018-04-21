@@ -22,10 +22,19 @@ async function testS32Sum() {
   let m = await instance('s32.wasm', {});
   let s = m.instance.exports.add(3,4);
   assert(s === 7, 'secret addition is broken');
+  assert(m.instance.exports.add_one(5) === 6, 'secret addition is broken');
 }
 
 async function testS64() {
   let m = await instance('s64.wasm', {});
+}
+
+async function testSecretMem() {
+  let m = await instance('secret_memory.wasm', {});
+  let e = m.instance.exports;
+  assert(e.load_at_zero() === 0, 's32 load is broken');
+  e.store_at_zero();
+  assert(e.load_at_zero() === 2, 's32 [something] is broken');
 }
 
 async function tests32linking() {
@@ -44,8 +53,9 @@ async function tests32linking() {
 
 
 Promise.all([
-    testS64(),
-    testPubSum(),
-    testS32Sum(),
-    tests32linking()
+  testS64(),
+  testPubSum(),
+  testS32Sum(),
+  tests32linking(),
+  testSecretMem(),
 ]).then(common.mustCall());

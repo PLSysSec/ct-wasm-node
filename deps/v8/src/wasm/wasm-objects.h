@@ -145,12 +145,15 @@ class WasmMemoryObject : public JSObject {
  public:
   DECL_CAST(WasmMemoryObject)
 
+  DECL_INT_ACCESSORS(flag)
   DECL_ACCESSORS(array_buffer, JSArrayBuffer)
   DECL_INT_ACCESSORS(maximum_pages)
   DECL_OPTIONAL_ACCESSORS(instances, WeakFixedArray)
   DECL_ACCESSORS(wasm_context, Managed<WasmContext>)
+  DECL_BOOLEAN_ACCESSORS(is_secret)
 
   enum {  // --
+    kFlagIndex,
     kArrayBufferIndex,
     kMaximumPagesIndex,
     kInstancesIndex,
@@ -159,6 +162,7 @@ class WasmMemoryObject : public JSObject {
   };
 
   DEF_SIZE(JSObject)
+  DEF_OFFSET(Flag)
   DEF_OFFSET(ArrayBuffer)
   DEF_OFFSET(MaximumPages)
   DEF_OFFSET(Instances)
@@ -172,11 +176,16 @@ class WasmMemoryObject : public JSObject {
                              Handle<WasmInstanceObject> object);
   uint32_t current_pages();
   inline bool has_maximum_pages();
+  static const int kIsSecretIndex = 0;
 
   V8_EXPORT_PRIVATE static Handle<WasmMemoryObject> New(
-      Isolate* isolate, MaybeHandle<JSArrayBuffer> buffer, int32_t maximum);
+      Isolate* isolate, MaybeHandle<JSArrayBuffer> buffer, int32_t maximum,
+      bool is_secret = false);
 
   static int32_t Grow(Isolate*, Handle<WasmMemoryObject>, uint32_t pages);
+
+  private:
+    DECL_INT_ACCESSORS(flags)
 };
 
 // A WebAssembly.Instance JavaScript-level object.

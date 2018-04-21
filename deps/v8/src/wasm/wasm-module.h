@@ -136,6 +136,7 @@ struct V8_EXPORT_PRIVATE WasmModule {
   bool has_shared_memory = false;  // true if memory is a SharedArrayBuffer
   bool has_maximum_pages = false;  // true if there is a maximum memory size
   bool has_memory = false;         // true if the memory was defined or imported
+  bool has_secret_memory = false;         // true if the memory was defined or imported as secret
   bool mem_export = false;         // true if the memory is exported
   int start_function_index = -1;   // start function, >= 0 if any
 

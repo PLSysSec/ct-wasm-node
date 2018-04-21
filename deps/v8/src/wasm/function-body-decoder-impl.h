@@ -1046,9 +1046,20 @@ class WasmDecoder : public Decoder {
           FOREACH_SECRET_OPCODE(DECLARE_OPCODE_CASE)
 #undef DECLARE_OPCODE_CASE
             return 2;
-          case kExprS32Const: {
-            ImmI32Operand<validate> operand(decoder, pc);
+#define DECLARE_OPCODE_CASE(name, opcode, sig) case kExpr##name:
+          FOREACH_SECRET_MEM_OPCODE(DECLARE_OPCODE_CASE)
+#undef DECLARE_OPCODE_CASE
+          {
+            MemoryAccessOperand<validate> operand(decoder, pc + 1, UINT32_MAX);
             return 2 + operand.length;
+          }
+          case kExprS32Const: {
+            ImmI32Operand<validate> operand(decoder, pc + 1);
+            return 1 + operand.length;
+          }
+          case kExprS64Const: {
+            ImmI64Operand<validate> operand(decoder, pc + 1);
+            return 1 + operand.length;
           }
           default:
             decoder->error(pc, "invalid Secrets opcode");
@@ -1089,6 +1100,7 @@ class WasmDecoder : public Decoder {
       case kExprGetGlobal:
       case kExprI32Const:
       case kExprS32Const:
+      case kExprS64Const:
       case kExprI64Const:
       case kExprF32Const:
       case kExprF64Const:
@@ -1125,7 +1137,10 @@ class WasmDecoder : public Decoder {
           case kExprI32AtomicStore8U:
           case kExprI32AtomicStore16U:
           case kExprS128StoreMem:
+          FOREACH_SECRET_STORE_OPCODE(DECLARE_OPCODE_CASE)
             return {2, 0};
+          FOREACH_SECRET_LOAD_OPCODE(DECLARE_OPCODE_CASE)
+            return {1, 1};
           default: {
             sig = WasmOpcodes::Signature(opcode);
             if (sig) {
@@ -1306,6 +1321,14 @@ class WasmFullDecoder : public WasmDecoder<validate> {
   bool last_end_found_;
 
   bool CheckHasMemory() {
+    if (!VALIDATE(this->module_->has_memory)) {
+      this->error(this->pc_ - 1, "memory instruction with no memory");
+      return false;
+    }
+    return true;
+  }
+
+  bool CheckHasSecretMemory() {
     if (!VALIDATE(this->module_->has_memory)) {
       this->error(this->pc_ - 1, "memory instruction with no memory");
       return false;
@@ -2053,6 +2076,7 @@ class WasmFullDecoder : public WasmDecoder<validate> {
 
   int DecodeLoadMem(LoadType type, int prefix_len = 0) {
     if (!CheckHasMemory()) return 0;
+    if (type.secret() && !CheckHasSecretMemory()) return 0;
     MemoryAccessOperand<validate> operand(this, this->pc_ + prefix_len,
                                           type.size_log_2());
     auto index = Pop(0, kWasmI32);
@@ -2063,6 +2087,7 @@ class WasmFullDecoder : public WasmDecoder<validate> {
 
   int DecodeStoreMem(StoreType store, int prefix_len = 0) {
     if (!CheckHasMemory()) return 0;
+    if (store.secret() && !CheckHasSecretMemory()) return 0;
     MemoryAccessOperand<validate> operand(this, this->pc_ + prefix_len,
                                           store.size_log_2());
     auto value = Pop(1, store.value_type());
@@ -2181,19 +2206,76 @@ class WasmFullDecoder : public WasmDecoder<validate> {
     unsigned len = 0;
     switch (opcode) {
       case kExprS32Const: {
-        ImmI32Operand<validate> operand(this, this->pc_);
+        ImmI32Operand<validate> operand(this, this->pc_ + 1);
         auto* value = Push(kWasmS32);
         CALL_INTERFACE_IF_REACHABLE(S32Const, value, operand.value);
-        len = 1 + operand.length;
+        len = operand.length;
         break;
       }
       case kExprS64Const: {
-        ImmI64Operand<validate> operand(this, this->pc_);
+        ImmI64Operand<validate> operand(this, this->pc_ + 1);
         auto* value = Push(kWasmS64);
         CALL_INTERFACE_IF_REACHABLE(S64Const, value, operand.value);
-        len = 1 + operand.length;
+        len = operand.length;
         break;
       }
+      case kExprS32LoadMem8S:
+        len = DecodeLoadMem(LoadType::kS32Load8S, 1);
+        break;
+      case kExprS32LoadMem8U:
+        len = DecodeLoadMem(LoadType::kS32Load8U, 1);
+        break;
+      case kExprS32LoadMem16S:
+        len = DecodeLoadMem(LoadType::kS32Load16S, 1);
+        break;
+      case kExprS32LoadMem16U:
+        len = DecodeLoadMem(LoadType::kS32Load16U, 1);
+        break;
+      case kExprS32LoadMem:
+        len = DecodeLoadMem(LoadType::kS32Load, 1);
+        break;
+      case kExprS64LoadMem8S:
+        len = DecodeLoadMem(LoadType::kS64Load8S, 1);
+        break;
+      case kExprS64LoadMem8U:
+        len = DecodeLoadMem(LoadType::kS64Load8U, 1);
+        break;
+      case kExprS64LoadMem16S:
+        len = DecodeLoadMem(LoadType::kS64Load16S, 1);
+        break;
+      case kExprS64LoadMem16U:
+        len = DecodeLoadMem(LoadType::kS64Load16U, 1);
+        break;
+      case kExprS64LoadMem32S:
+        len = DecodeLoadMem(LoadType::kS64Load32S, 1);
+        break;
+      case kExprS64LoadMem32U:
+        len = DecodeLoadMem(LoadType::kS64Load32U, 1);
+        break;
+      case kExprS64LoadMem:
+        len = DecodeLoadMem(LoadType::kS64Load, 1);
+        break;
+      case kExprS32StoreMem8:
+        len = DecodeStoreMem(StoreType::kS32Store8, 1);
+        break;
+      case kExprS32StoreMem16:
+        len = DecodeStoreMem(StoreType::kS32Store16, 1);
+        break;
+      case kExprS32StoreMem:
+        len = DecodeStoreMem(StoreType::kS32Store, 1);
+        break;
+      case kExprS64StoreMem8:
+        len = DecodeStoreMem(StoreType::kS64Store8, 1);
+        break;
+      case kExprS64StoreMem16:
+        len = DecodeStoreMem(StoreType::kS64Store16, 1);
+        break;
+      case kExprS64StoreMem32:
+        len = DecodeStoreMem(StoreType::kS64Store32, 1);
+        break;
+      case kExprS64StoreMem:
+        len = DecodeStoreMem(StoreType::kS64Store, 1);
+        break;
       default: {
         FunctionSig* sig = WasmOpcodes::Signature(opcode);
         if (!VALIDATE(sig != nullptr)) {

@@ -26,6 +26,7 @@
   (func (export "gt_u") (param $x s32) (param $y s32) (result s32) (s32.gt_u (get_local $x) (get_local $y)))
   (func (export "ge_s") (param $x s32) (param $y s32) (result s32) (s32.ge_s (get_local $x) (get_local $y)))
   (func (export "ge_u") (param $x s32) (param $y s32) (result s32) (s32.ge_u (get_local $x) (get_local $y)))
+  (func (export "add_one") (param $x s32) (result s32) (s32.add (s32.const 1) (get_local $x)))
 )
 
 (assert_return (invoke "add" (s32.const 1) (s32.const 1)) (s32.const 2))

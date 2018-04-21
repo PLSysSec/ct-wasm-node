@@ -469,7 +469,7 @@ void SetInstanceMemory(Isolate* isolate, Handle<WasmInstanceObject> instance,
 
 Handle<WasmMemoryObject> WasmMemoryObject::New(
     Isolate* isolate, MaybeHandle<JSArrayBuffer> maybe_buffer,
-    int32_t maximum) {
+    int32_t maximum, bool is_secret) {
   // TODO(kschimpf): Do we need to add an argument that defines the
   // style of memory the user prefers (with/without trap handling), so
   // that the memory will match the style of the compiled wasm module.
@@ -478,7 +478,6 @@ Handle<WasmMemoryObject> WasmMemoryObject::New(
       isolate->native_context()->wasm_memory_constructor());
   auto memory_obj = Handle<WasmMemoryObject>::cast(
       isolate->factory()->NewJSObject(memory_ctor, TENURED));
-
   Handle<JSArrayBuffer> buffer;
   if (maybe_buffer.is_null()) {
     // If no buffer was provided, create a 0-length one.
@@ -495,7 +494,7 @@ Handle<WasmMemoryObject> WasmMemoryObject::New(
   }
   memory_obj->set_array_buffer(*buffer);
   memory_obj->set_maximum_pages(maximum);
-
+  memory_obj->set_is_secret(is_secret);
   return memory_obj;
 }
 

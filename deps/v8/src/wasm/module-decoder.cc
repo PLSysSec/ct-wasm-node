@@ -498,7 +498,7 @@ class ModuleDecoderImpl : public Decoder {
               "memory", "pages", FLAG_wasm_max_mem_pages,
               &module_->initial_pages, &module_->has_maximum_pages,
               kSpecMaxWasmMemoryPages, &module_->maximum_pages,
-              &module_->has_shared_memory);
+              &module_->has_shared_memory, &module_->has_secret_memory);
           break;
         }
         case kExternalGlobal: {
@@ -566,7 +566,7 @@ class ModuleDecoderImpl : public Decoder {
       consume_resizable_limits(
           "memory", "pages", FLAG_wasm_max_mem_pages, &module_->initial_pages,
           &module_->has_maximum_pages, kSpecMaxWasmMemoryPages,
-          &module_->maximum_pages, &module_->has_shared_memory);
+          &module_->maximum_pages, &module_->has_shared_memory, &module_->has_secret_memory);
     }
   }
 
@@ -1124,7 +1124,8 @@ class ModuleDecoderImpl : public Decoder {
                                 uint32_t max_initial, uint32_t* initial,
                                 bool* has_max, uint32_t max_maximum,
                                 uint32_t* maximum,
-                                bool* has_shared_memory = nullptr) {
+                                bool* has_shared_memory = nullptr,
+                                bool* has_secret_memory = nullptr) {
     uint8_t flags = consume_u8("resizable limits flags");
     const byte* pos = pc();
 
@@ -1142,11 +1143,14 @@ class ModuleDecoderImpl : public Decoder {
                name);
       }
     } else {
-      if (flags & 0xFE) {
+      if (flags & 0xFC) {
         errorf(pos - 1, "invalid %s limits flags", name);
       }
     }
-
+    if(flags & 0x2) {
+      DCHECK_NOT_NULL(has_shared_memory);
+      *has_secret_memory = true;
+    }
     *initial = consume_u32v("initial size");
     *has_max = false;
     if (*initial > max_initial) {
