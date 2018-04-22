@@ -1,5 +1,5 @@
 (module
-    (memory secret 10)
+    (memory (export "memory") secret 10)
 
     (func (export "load_at_zero") (result s32) (s32.load (i32.const 0)))
     (func (export "store_at_zero") (s32.store (i32.const 0) (s32.const 2)))

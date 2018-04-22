@@ -35,6 +35,17 @@ async function testSecretMem() {
   assert(e.load_at_zero() === 0, 's32 load is broken');
   e.store_at_zero();
   assert(e.load_at_zero() === 2, 's32 [something] is broken');
+
+  let client = await instance('sec_memory_client.wasm', { lib: m.instance.exports });
+
+  await instance('memory_client.wasm', { lib: m.instance.exports })
+    .then(() => assert.fail("public memory client linked with secret memory lib"))
+    .catch(() => { });
+
+  let pub_memory = await instance('memory_lib.wasm', {});
+  await instance('sec_memory_client.wasm', { lib: pub_memory.instance.exports })
+    .then(() => assert.fail("secret memory client linked with public memory lib"))
+    .catch(() => { });
 }
 
 async function tests32linking() {
