@@ -71,6 +71,20 @@ async function testTrusted() {
 
 }
 
+async function testClassification() {
+  let lib = await instance("classification.wasm", {});
+  assert.equal(lib.instance.exports.invokeTrusted(), 5);
+
+  await instance('trusted_from_untrusted.wasm', {})
+    .then(() => assert.fail("Trusted function called from untrusted func"))
+    .catch(()=>{});
+
+  await instance('declassify_from_untrusted.wasm', {})
+    .then(() => assert.fail("Declassify called from untrusted func"))
+    .catch(()=>{});
+
+}
+
 
 Promise.all([
   testS64(),
@@ -79,4 +93,5 @@ Promise.all([
   tests32linking(),
   testSecretMem(),
   testTrusted(),
+  testClassification(),
 ]).then(common.mustCall());

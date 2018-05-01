@@ -4026,11 +4026,9 @@ Node* WasmGraphBuilder::SecretOp(wasm::WasmOpcode opcode, Node* const* inputs) {
       return graph()->NewNode(m->Word32Equal(), inputs[0], jsgraph()->Int32Constant(0));
     case wasm::kExprS32Clz:
       return graph()->NewNode(m->Word32Clz(), inputs[0]);
-      break;
     case wasm::kExprS32Ctz: {
       if (m->Word32Ctz().IsSupported()) {
         return graph()->NewNode(m->Word32Ctz().op(), inputs[0]);
-        break;
       } else if (m->Word32ReverseBits().IsSupported()) {
         Node* reversed = graph()->NewNode(m->Word32ReverseBits().op(), inputs[0]);
         Node* result = graph()->NewNode(m->Word32Clz(), reversed);
@@ -4178,6 +4176,11 @@ Node* WasmGraphBuilder::SecretOp(wasm::WasmOpcode opcode, Node* const* inputs) {
       return BuildI64Rol(inputs[0], inputs[1]);
     case wasm::kExprS64Eqz:
       return graph()->NewNode(m->Word64Equal(), inputs[0], jsgraph()->Int64Constant(0));
+    case wasm::kExprS32Classify:
+    case wasm::kExprS64Classify:
+    case wasm::kExprI32Declassify:
+    case wasm::kExprI64Declassify:
+      return inputs[0];
     default:
       FATAL_UNSUPPORTED_OPCODE(opcode);
   }

@@ -503,7 +503,7 @@ ct-wasm:
 	which wasm
 
 %.wasm: %.wast
-	wasm -d -i $< -o $@
+	wasm -d -u -i $< -o $@
 
 WASTS = $(wildcard test/ct-wasm/*.wast)
 WASMS = $(WASTS:.wast=.wasm)

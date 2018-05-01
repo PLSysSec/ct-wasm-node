@@ -496,8 +496,10 @@ using WasmName = Vector<const char>;
   V(S32ConvertS64, 0xfba7, sec_lsec)     \
   V(S64SConvertS32, 0xfbac, lsec_sec) \
   V(S64UConvertS32, 0xfbad, lsec_sec) \
-  V(S32ClassifyI32, 0xfbc0, sec_i)    \
-  V(S64ClassifyI64, 0xfbc1, lsec_l)
+  V(S32Classify, 0xfbc0, sec_i)    \
+  V(S64Classify, 0xfbc1, lsec_l)   \
+  V(I32Declassify, 0xfbc2, t_i_sec) \
+  V(I64Declassify, 0xfbc3, t_l_lsec) \
 
 #define FOREACH_SECRET_LOAD_OPCODE(V) \
   V(S32LoadMem, 0xfb28, sec_i)         \

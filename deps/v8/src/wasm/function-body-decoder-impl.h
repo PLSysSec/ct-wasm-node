@@ -2027,6 +2027,10 @@ class WasmFullDecoder : public WasmDecoder<validate> {
   // Pops arguments as required by signature into {args_}.
   V8_INLINE void PopArgs(FunctionSig* sig) {
     int count = sig ? static_cast<int>(sig->parameter_count()) : 0;
+    if(!this->sig_->is_trusted() && sig->is_trusted()){
+      this->errorf(this->pc_, "attempted to perform trusted operation in untrusted function %s",
+                    SafeOpcodeNameAt(this->pc_));
+    }
     args_.resize(count);
     for (int i = count - 1; i >= 0; --i) {
       args_[i] = Pop(i, sig->GetParam(i));

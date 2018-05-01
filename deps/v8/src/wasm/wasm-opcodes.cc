@@ -346,8 +346,8 @@ namespace {
 enum WasmOpcodeSig : byte {
   kSigEnum_None,
   FOREACH_SIGNATURE(DECLARE_SIG_ENUM)
-  kSigEnum_t_lsec_l,
-  kSigEnum_t_sec_i
+  kSigEnum_t_l_lsec,
+  kSigEnum_t_i_sec
 };
 #undef DECLARE_SIG_ENUM
 #define DECLARE_SIG(name, ...)                                                \
@@ -359,21 +359,21 @@ enum WasmOpcodeSig : byte {
 FOREACH_SIGNATURE(DECLARE_SIG)
 #undef DECLARE_SIG
 
-constexpr ValueType kTypes_t_lsec_l[] = {kWasmI64, kWasmS64};
-constexpr int kReturnsCount_t_lsec_l = kTypes_t_lsec_l[0] == kWasmStmt ? 0 : 1;
-constexpr FunctionSig kSig_t_lsec_l(
-    kReturnsCount_t_lsec_l, static_cast<int>(arraysize(kTypes_t_lsec_l)) - 1,
-    kTypes_t_lsec_l + (1 - kReturnsCount_t_lsec_l), true);
+constexpr ValueType kTypes_t_l_lsec[] = {kWasmI64, kWasmS64};
+constexpr int kReturnsCount_t_l_lsec = kTypes_t_l_lsec[0] == kWasmStmt ? 0 : 1;
+constexpr FunctionSig kSig_t_l_lsec(
+    kReturnsCount_t_l_lsec, static_cast<int>(arraysize(kTypes_t_l_lsec)) - 1,
+    kTypes_t_l_lsec + (1 - kReturnsCount_t_l_lsec), true);
 
-constexpr ValueType kTypes_t_sec_i[] = {kWasmI32, kWasmS32};
-constexpr int kReturnsCount_t_sec_i = kTypes_t_sec_i[0] == kWasmStmt ? 0 : 1;
-constexpr FunctionSig kSig_t_sec_i(
-    kReturnsCount_t_sec_i, static_cast<int>(arraysize(kTypes_t_sec_i)) - 1,
-    kTypes_t_sec_i + (1 - kReturnsCount_t_sec_i), true);
+constexpr ValueType kTypes_t_i_sec[] = {kWasmI32, kWasmS32};
+constexpr int kReturnsCount_t_i_sec = kTypes_t_i_sec[0] == kWasmStmt ? 0 : 1;
+constexpr FunctionSig kSig_t_i_sec(
+    kReturnsCount_t_i_sec, static_cast<int>(arraysize(kTypes_t_i_sec)) - 1,
+    kTypes_t_i_sec + (1 - kReturnsCount_t_i_sec), true);
 
 #define DECLARE_SIG_ENTRY(name, ...) &kSig_##name,
 constexpr const FunctionSig* kSimpleExprSigs[] = {
-    nullptr, FOREACH_SIGNATURE(DECLARE_SIG_ENTRY) &kSig_t_sec_i, &kSig_t_lsec_l};
+    nullptr, FOREACH_SIGNATURE(DECLARE_SIG_ENTRY) &kSig_t_l_lsec, &kSig_t_i_sec};
 #undef DECLARE_SIG_ENTRY
 
 // gcc 4.7 - 4.9 has a bug which causes the constexpr attribute to get lost when
