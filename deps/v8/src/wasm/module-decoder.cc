@@ -1300,6 +1300,7 @@ class ModuleDecoderImpl : public Decoder {
     }
   }
 
+
   FunctionSig* consume_sig(Zone* zone) {
     constexpr bool has_return_values = true;
     return consume_sig_internal(zone, has_return_values);
@@ -1311,9 +1312,13 @@ class ModuleDecoderImpl : public Decoder {
   }
 
  private:
+
   FunctionSig* consume_sig_internal(Zone* zone, bool has_return_values) {
-    if (has_return_values && !expect_u8("type form", kWasmFunctionTypeCode))
+    byte type_signal = consume_u8("type form");
+    if (has_return_values && type_signal != kWasmFunctionTypeCode && type_signal != kWasmTrustedFunctionTypeCode) {
+      errorf(pc(), "expected type form, got 0x%02x", type_signal);
       return nullptr;
+    }
     // parse parameter types
     uint32_t param_count =
         consume_count("param count", kV8MaxWasmFunctionParams);
@@ -1345,8 +1350,7 @@ class ModuleDecoderImpl : public Decoder {
     uint32_t b = 0;
     for (uint32_t i = 0; i < return_count; ++i) buffer[b++] = returns[i];
     for (uint32_t i = 0; i < param_count; ++i) buffer[b++] = params[i];
-
-    return new (zone) FunctionSig(return_count, param_count, buffer);
+    return new (zone) FunctionSig(return_count, param_count, buffer, type_signal == kWasmTrustedFunctionTypeCode);
   }
 };
 

@@ -61,6 +61,15 @@ async function tests32linking() {
     .catch(()=>{});
 }
 
+async function testTrusted() {
+  let lib = await instance("trusted_lib.wasm", {});
+  let cli = await instance("trusted_client.wasm", { lib: lib.instance.exports });
+
+  await instance('untrusted_client.wasm', {lib: lib.instance.exports})
+    .then(() => assert.fail("Trusted function provided for untrusted import"))
+    .catch(()=>{});
+
+}
 
 
 Promise.all([
@@ -69,4 +78,5 @@ Promise.all([
   testS32Sum(),
   tests32linking(),
   testSecretMem(),
+  testTrusted(),
 ]).then(common.mustCall());

@@ -16,11 +16,14 @@ template <typename T>
 class Signature : public ZoneObject {
  public:
   constexpr Signature(size_t return_count, size_t parameter_count,
-                      const T* reps)
+                      const T* reps, bool is_trusted = false)
       : return_count_(return_count),
         parameter_count_(parameter_count),
+        is_trusted_(is_trusted),
         reps_(reps) {}
 
+  bool is_trusted() const { return is_trusted_; }
+  void set_is_trusted(bool b) { is_trusted_ = b; }
   size_t return_count() const { return return_count_; }
   size_t parameter_count() const { return parameter_count_; }
 
@@ -49,6 +52,7 @@ class Signature : public ZoneObject {
     if (this == that) return true;
     if (this->parameter_count() != that->parameter_count()) return false;
     if (this->return_count() != that->return_count()) return false;
+    if (this->is_trusted() != that->is_trusted()) return false;
     size_t size = this->return_count() + this->parameter_count();
     for (size_t i = 0; i < size; i++) {
       if (this->reps_[i] != that->reps_[i]) return false;
@@ -95,6 +99,7 @@ class Signature : public ZoneObject {
  protected:
   size_t return_count_;
   size_t parameter_count_;
+  bool is_trusted_;
   const T* reps_;
 };
 

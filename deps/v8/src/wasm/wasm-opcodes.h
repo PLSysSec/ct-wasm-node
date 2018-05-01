@@ -46,8 +46,32 @@ constexpr ValueType kWasmF32 = MachineRepresentation::kFloat32;
 constexpr ValueType kWasmF64 = MachineRepresentation::kFloat64;
 constexpr ValueType kWasmS128 = MachineRepresentation::kSimd128;
 constexpr ValueType kWasmVar = MachineRepresentation::kTagged;
-
 using FunctionSig = Signature<ValueType>;
+/*
+class FunctionSig {
+  public:
+
+  FunctionSig(Signature<ValueType> s) : sig(s){ }
+  template <typename ...Args>
+  FunctionSig(Args ...args) : sig(Signature<ValueType>(args...)){}
+
+  class Builder : public Signature<ValueType>::Builder  {
+    public:
+      template <typename ...Args>
+      Builder(Args ...args) : Signature<ValueType>::Builder(args...) {}
+
+  };
+
+  operator Signature<ValueType>() { return sig; }
+
+  bool is_trusted() { return trusted; }
+  void set_is_trusted(bool t) { trusted = t; }
+
+ private:
+  bool trusted = false;
+  Signature<ValueType> sig;
+};
+*/
 std::ostream& operator<<(std::ostream& os, const FunctionSig& function);
 bool IsJSCompatibleSignature(const FunctionSig* sig);
 

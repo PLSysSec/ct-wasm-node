@@ -510,7 +510,7 @@ WASMS = $(WASTS:.wast=.wasm)
 # WASMS := $(patsubst %.wast, %.wasm, $(WASTS))
 
 test-ct-wasm: ct-wasm $(WASMS)
-	$(PYTHON) tools/test.py --mode=debug ct-wasm
+	$(PYTHON) tools/test.py  ct-wasm
 
 .PHONY: test-hash-seed
 # Verifies the hash seed used by V8 for hashing is random.
