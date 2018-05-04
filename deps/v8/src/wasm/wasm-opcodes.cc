@@ -20,6 +20,8 @@ namespace wasm {
     return str;
 #define CASE_I32_OP(name, str) CASE_OP(I32##name, "i32." str)
 #define CASE_I64_OP(name, str) CASE_OP(I64##name, "i64." str)
+#define CASE_S32_OP(name, str) CASE_OP(S32##name, "s32." str)
+#define CASE_S64_OP(name, str) CASE_OP(S64##name, "s64." str)
 #define CASE_F32_OP(name, str) CASE_OP(F32##name, "f32." str)
 #define CASE_F64_OP(name, str) CASE_OP(F64##name, "f64." str)
 #define CASE_F32x4_OP(name, str) CASE_OP(F32x4##name, "f32x4." str)
@@ -36,6 +38,7 @@ namespace wasm {
 #define CASE_INT_OP(name, str) CASE_I32_OP(name, str) CASE_I64_OP(name, str)
 #define CASE_FLOAT_OP(name, str) CASE_F32_OP(name, str) CASE_F64_OP(name, str)
 #define CASE_ALL_OP(name, str) CASE_FLOAT_OP(name, str) CASE_INT_OP(name, str)
+#define CASE_SECRET_OP(name, str) CASE_S32_OP(name, str) CASE_S64_OP(name, str)
 #define CASE_SIMD_OP(name, str)                                              \
   CASE_F32x4_OP(name, str) CASE_I32x4_OP(name, str) CASE_I16x8_OP(name, str) \
       CASE_I8x16_OP(name, str)
@@ -252,6 +255,49 @@ const char* WasmOpcodes::OpcodeName(WasmOpcode opcode) {
     CASE_U32_OP(AtomicExchange, "atomic_xchng")
     CASE_U32_OP(AtomicCompareExchange, "atomic_cmpxchng")
 
+    CASE_SECRET_OP(Eqz, "eqz")
+    CASE_SECRET_OP(Eq, "eq")
+    CASE_SECRET_OP(Ne, "ne")
+    CASE_SECRET_OP(LtS, "lt_s")
+    CASE_SECRET_OP(LtU, "lt_u")
+    CASE_SECRET_OP(GtS, "gt_s")
+    CASE_SECRET_OP(GtU, "gt_u")
+    CASE_SECRET_OP(LeS, "le_s")
+    CASE_SECRET_OP(LeU, "le_u")
+    CASE_SECRET_OP(GeS, "ge_s")
+    CASE_SECRET_OP(GeU, "ge_u")
+    CASE_SECRET_OP(Clz, "clz")
+    CASE_SECRET_OP(Ctz, "ctz")
+    CASE_SECRET_OP(Popcnt, "popcnt")
+    CASE_SECRET_OP(Add, "add")
+    CASE_SECRET_OP(Sub, "sub")
+    CASE_SECRET_OP(Mul, "mul")
+    CASE_SECRET_OP(And, "and")
+    CASE_SECRET_OP(Ior, "ior")
+    CASE_SECRET_OP(Xor, "xor")
+    CASE_SECRET_OP(Shl, "shl")
+    CASE_SECRET_OP(ShrS, "shr_s")
+    CASE_SECRET_OP(ShrU, "shr_u")
+    CASE_SECRET_OP(Rol, "rol")
+    CASE_SECRET_OP(Ror, "ror")
+    CASE_SECRET_OP(Const, "const")
+
+    CASE_SECRET_OP(LoadMem, "load")
+    CASE_SIGN_OP(SECRET, LoadMem8, "load8")
+    CASE_SIGN_OP(SECRET, LoadMem16, "load16")
+    CASE_SIGN_OP(S64, LoadMem32, "load32")
+
+    CASE_SECRET_OP(StoreMem, "store")
+    CASE_SECRET_OP(StoreMem8, "store8")
+    CASE_SECRET_OP(StoreMem16, "store16")
+    CASE_S64_OP(StoreMem32, "store32")
+
+    CASE_S32_OP(ConvertS64, "wrap/s64")
+    CASE_S64_OP(SConvertS32, "extend_s/s32")
+    CASE_S64_OP(UConvertS32, "extend_u/s32")
+    CASE_SECRET_OP(Classify, "classify")
+    CASE_INT_OP(Declassify, "declassify")
+
     default : return "unknown";
     // clang-format on
   }
@@ -285,6 +331,9 @@ const char* WasmOpcodes::OpcodeName(WasmOpcode opcode) {
 #undef CASE_CONVERT_SAT_OP
 #undef CASE_L32_OP
 #undef CASE_U32_OP
+#undef CASE_S32_OP
+#undef CASE_S64_OP
+#undef CASE_SECRET_OP
 
 bool WasmOpcodes::IsPrefixOpcode(WasmOpcode opcode) {
   switch (opcode) {

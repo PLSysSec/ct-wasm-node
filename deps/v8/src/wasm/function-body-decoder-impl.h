@@ -1261,7 +1261,21 @@ class WasmFullDecoder : public WasmDecoder<validate> {
 
   const char* SafeOpcodeNameAt(const byte* pc) {
     if (pc >= this->end_) return "<end>";
-    return WasmOpcodes::OpcodeName(static_cast<WasmOpcode>(*pc));
+    WasmOpcode opcode = static_cast<WasmOpcode>(*pc);
+    switch (opcode) {
+      #define PREFIX_CASE(name, _)                      \
+        case k##name##Prefix: {                              \
+          if (pc + 1 >= this->end_) {                        \
+            return "<##name prefix>";                        \
+          }                                                  \
+          opcode = static_cast<WasmOpcode>(opcode << 8 | *(pc + 1)); \
+          break;                                             \
+        }
+      FOREACH_PREFIX(PREFIX_CASE)
+      default:
+        break;
+    }
+    return WasmOpcodes::OpcodeName(opcode);
   }
 
   inline Zone* zone() const { return zone_; }
