@@ -1133,6 +1133,8 @@ class WasmDecoder : public Decoder {
       case kSimdPrefix: {
         opcode = static_cast<WasmOpcode>(opcode << 8 | *(pc + 1));
         switch (opcode) {
+          case kExprSecretSelect:
+            return {3, 1};
           case kExprI32AtomicStore:
           case kExprI32AtomicStore8U:
           case kExprI32AtomicStore16U:
@@ -2235,6 +2237,19 @@ class WasmFullDecoder : public WasmDecoder<validate> {
         auto* value = Push(kWasmS64);
         CALL_INTERFACE_IF_REACHABLE(S64Const, value, operand.value);
         len = operand.length;
+        break;
+      }
+      case kExprSecretSelect: {
+        auto cond = Pop(2, kWasmS32);
+        auto fval = Pop();
+        auto tval = Pop(0, fval.type);
+        if(fval.type != kWasmS32 && fval.type != kWasmS64) {
+          this->errorf(this->pc_,
+                       "attempted to secret switch with non-secret operands");
+          break;
+        }
+        auto* result = Push(tval.type == kWasmVar ? fval.type : tval.type);
+        CALL_INTERFACE_IF_REACHABLE(Select, cond, fval, tval, result);
         break;
       }
       case kExprS32LoadMem8S:

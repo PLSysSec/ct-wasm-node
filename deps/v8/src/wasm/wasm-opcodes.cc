@@ -297,6 +297,7 @@ const char* WasmOpcodes::OpcodeName(WasmOpcode opcode) {
     CASE_S64_OP(UConvertS32, "extend_u/s32")
     CASE_SECRET_OP(Classify, "classify")
     CASE_INT_OP(Declassify, "declassify")
+    CASE_OP(SecretSelect, "secret_select")
 
     default : return "unknown";
     // clang-format on

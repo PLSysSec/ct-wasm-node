@@ -111,6 +111,7 @@ using WasmName = Vector<const char>;
   V(I64Const, 0x42, _)         \
   V(S32Const, 0xfb41, _)                  \
   V(S64Const, 0xfb42, _)                  \
+  V(SecretSelect, 0xfb1b, _)           \
   V(F32Const, 0x43, _)         \
   V(F64Const, 0x44, _)
 

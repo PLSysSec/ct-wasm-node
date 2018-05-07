@@ -82,6 +82,15 @@ async function testClassification() {
   await instance('declassify_from_untrusted.wasm', {})
     .then(() => assert.fail("Declassify called from untrusted func"))
     .catch(()=>{});
+}
+
+async function testSecretSelect() {
+  let lib = await instance('secret_select.wasm', {});
+  assert.equal(lib.instance.exports.secret_select(3, 4, 1), 3);
+
+  await instance('secret_select_err.wasm', {})
+    .then(() => assert.fail("Selected public value with secret condition"))
+    .catch(()=>{});
 
 }
 
@@ -94,4 +103,5 @@ Promise.all([
   testSecretMem(),
   testTrusted(),
   testClassification(),
+  testSecretSelect(),
 ]).then(common.mustCall());
