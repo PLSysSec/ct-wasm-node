@@ -45,6 +45,7 @@ struct WasmFunction {
   WireBytesRef code;     // code of this function.
   bool imported;
   bool exported;
+  bool trusted = false;
 };
 
 // Static representation of a wasm global variable.
