@@ -46,6 +46,16 @@ async function testSecretMem() {
   await instance('sec_memory_client.wasm', { lib: pub_memory.instance.exports })
     .then(() => assert.fail("secret memory client linked with public memory lib"))
     .catch(() => { });
+
+  let mem = new WebAssembly.Memory({
+    initial: 1,
+    secret: true,
+  })
+  let imp = await instance('import-memory.wasm', { lib: { mem } });
+
+  imp.instance.exports.write(4, 67);
+  let view = new Uint32Array(mem.buffer);
+  assert.equal(view[1], 67, "Operation on imported secret memory failed");
 }
 
 async function tests32linking() {

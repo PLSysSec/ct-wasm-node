@@ -609,6 +609,19 @@ void WebAssemblyMemory(const v8::FunctionCallbackInfo<v8::Value>& args) {
     }
   }
 
+  // The descriptor's 'maximum'.
+  bool is_secret = false;
+  Local<String> secret_key = v8_str(isolate, "secret");
+  Maybe<bool> has_secret = descriptor->Has(context, secret_key);
+
+  if (!has_secret.IsNothing() && has_secret.FromJust()) {
+    v8::MaybeLocal<v8::Value> maybe = descriptor->Get(context, secret_key);
+    v8::Local<v8::Value> value;
+    if (maybe.ToLocal(&value)) {
+      if (!value->BooleanValue(context).To(&is_secret)) return;
+    }
+  }
+
   bool is_shared_memory = false;
   if (i::FLAG_experimental_wasm_threads) {
     // Shared property of descriptor
@@ -648,7 +661,7 @@ void WebAssemblyMemory(const v8::FunctionCallbackInfo<v8::Value>& args) {
     }
   }
   i::Handle<i::JSObject> memory_obj = i::WasmMemoryObject::New(
-      i_isolate, buffer, static_cast<int32_t>(maximum));
+      i_isolate, buffer, static_cast<int32_t>(maximum), is_secret);
   args.GetReturnValue().Set(Utils::ToLocal(memory_obj));
 }
 
