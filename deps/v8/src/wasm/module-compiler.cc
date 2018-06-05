@@ -3118,9 +3118,11 @@ T* InstanceBuilder::GetRawGlobalPtr(WasmGlobal& global) {
 void InstanceBuilder::InitGlobals() {
   for (auto global : module_->globals) {
     switch (global.init.kind) {
+      case WasmInitExpr::kS32Const:
       case WasmInitExpr::kI32Const:
         *GetRawGlobalPtr<int32_t>(global) = global.init.val.i32_const;
         break;
+      case WasmInitExpr::kS64Const:
       case WasmInitExpr::kI64Const:
         *GetRawGlobalPtr<int64_t>(global) = global.init.val.i64_const;
         break;

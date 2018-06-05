@@ -1,6 +1,7 @@
 ;; s32 operations
 
 (module
+  (global $foo (mut s32) (s32.const 2))
   (func (export "add") (param $x s32) (param $y s32) (result s32) (s32.add (get_local $x) (get_local $y)))
   (func (export "sub") (param $x s32) (param $y s32) (result s32) (s32.sub (get_local $x) (get_local $y)))
   (func (export "mul") (param $x s32) (param $y s32) (result s32) (s32.mul (get_local $x) (get_local $y)))

@@ -103,6 +103,10 @@ ValueType TypeOf(const WasmModule* module, const WasmInitExpr& expr) {
       return kWasmI32;
     case WasmInitExpr::kI64Const:
       return kWasmI64;
+    case WasmInitExpr::kS32Const:
+      return kWasmS32;
+    case WasmInitExpr::kS64Const:
+      return kWasmS64;
     case WasmInitExpr::kF32Const:
       return kWasmF32;
     case WasmInitExpr::kF64Const:
@@ -1214,6 +1218,32 @@ class ModuleDecoderImpl : public Decoder {
         expr.kind = WasmInitExpr::kGlobalIndex;
         expr.val.global_index = operand.index;
         len = operand.length;
+        break;
+      }
+      case kSecretPrefix: {
+        WasmOpcode sec_opcode = static_cast<WasmOpcode>(opcode << 8 | consume_u8("secret opcode"));
+        switch(sec_opcode) {
+          case kExprS32Const: {
+            ImmI32Operand<Decoder::kValidate> operand(this, pc() -1);
+            expr.kind = WasmInitExpr::kS32Const;
+            expr.val.i32_const = operand.value;
+            len = operand.length;
+            break;
+          }
+          case kExprS64Const: {
+            ImmI64Operand<Decoder::kValidate> operand(this, pc() - 1);
+            expr.kind = WasmInitExpr::kS64Const;
+            expr.val.i64_const = operand.value;
+            len = operand.length;
+            break;
+          }
+          default: {
+            error("invalid opcode in initialization expression");
+            expr.kind = WasmInitExpr::kNone;
+            expr.val.i32_const = 0;
+            break;
+          }
+        }
         break;
       }
       case kExprI32Const: {

@@ -1,6 +1,7 @@
 ;; s64 operations
 
 (module
+  (global $foo (mut s64) (s64.const 2))
   (func (export "add") (param $x s64) (param $y s64) (result s64) (s64.add (get_local $x) (get_local $y)))
   (func (export "sub") (param $x s64) (param $y s64) (result s64) (s64.sub (get_local $x) (get_local $y)))
   (func (export "mul") (param $x s64) (param $y s64) (result s64) (s64.mul (get_local $x) (get_local $y)))
