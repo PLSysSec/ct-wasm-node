@@ -1055,11 +1055,11 @@ class WasmDecoder : public Decoder {
           }
           case kExprS32Const: {
             ImmI32Operand<validate> operand(decoder, pc + 1);
-            return 1 + operand.length;
+            return 2 + operand.length;
           }
           case kExprS64Const: {
             ImmI64Operand<validate> operand(decoder, pc + 1);
-            return 1 + operand.length;
+            return 2 + operand.length;
           }
           default:
             decoder->error(pc, "invalid Secrets opcode");
