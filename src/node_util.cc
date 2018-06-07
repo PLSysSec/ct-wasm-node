@@ -152,10 +152,10 @@ void SafeGetenv(const FunctionCallbackInfo<Value>& args) {
             v8::NewStringType::kNormal).ToLocalChecked());
 }
 
-void GetRTDSC(const FunctionCallbackInfo<Value>& args) {
+void GetRDTSCP(const FunctionCallbackInfo<Value>& args) {
   Environment* env = Environment::GetCurrent(args);
   unsigned int lo, hi;
-  __asm__ __volatile__ ("rdtsc" : "=a" (lo), "=d" (hi));
+  __asm__ __volatile__ ("rdtscp" : "=a" (lo), "=d" (hi) : : "%rcx");
   v8::Local<v8::Array> res = Array::New(env->isolate());
   res->Set(0, v8::Uint32::NewFromUnsigned(env->isolate(), lo));
   res->Set(1, v8::Uint32::NewFromUnsigned(env->isolate(), hi));
@@ -210,7 +210,7 @@ void Initialize(Local<Object> target,
 
   env->SetMethod(target, "safeGetenv", SafeGetenv);
 
-  env->SetMethod(target, "rtdsc", GetRTDSC);
+  env->SetMethod(target, "rdtscp", GetRDTSCP);
 }
 
 }  // namespace util
