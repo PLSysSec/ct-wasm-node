@@ -227,7 +227,7 @@ class WasmGraphBuildingInterface {
     result->node = builder_->Int32Constant(value);
   }
 
-  void S64Const(Decoder* decoder, Value* result, int32_t value) {
+  void S64Const(Decoder* decoder, Value* result, int64_t value) {
     result->node = builder_->Int64Constant(value);
   }
 

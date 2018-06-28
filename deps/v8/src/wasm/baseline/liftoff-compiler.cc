@@ -577,11 +577,11 @@ class LiftoffCompiler {
   }
 
   void S32Const(Decoder* decoder, Value* result, int32_t value) {
-    unsupported(decoder, "f64.const");
+    unsupported(decoder, "s32.const");
   }
 
-  void S64Const(Decoder* decoder, Value* result, int32_t value) {
-    unsupported(decoder, "f64.const");
+  void S64Const(Decoder* decoder, Value* result, int64_t value) {
+    unsupported(decoder, "s64.const");
   }
 
   void F32Const(Decoder* decoder, Value* result, float value) {
