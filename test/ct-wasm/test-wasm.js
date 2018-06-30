@@ -74,6 +74,9 @@ async function tests32linking() {
 async function testTrusted() {
   let lib = await instance("trusted_lib.wasm", {});
   let cli = await instance("trusted_client.wasm", { lib: lib.instance.exports });
+  await instance('untrusted_client.wasm', { lib: { trusted() { } } })
+    .then(() => assert.fail("Incorrectly allowed a js function to fulfill an untrusted import"))
+    .catch(() => { });
 
   await instance('untrusted_client.wasm', {lib: lib.instance.exports})
     .then(() => assert.fail("Trusted function provided for untrusted import"))

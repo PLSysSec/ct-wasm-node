@@ -1966,15 +1966,16 @@ WasmCodeWrapper UnwrapExportOrCompileImportWrapper(
         isolate, Handle<WasmExportedFunction>::cast(target), sig, &unused,
         imported_instances, instance, import_index);
   }
-  // No wasm function or being debugged. Compile a new wrapper for the new
-  // signature.
-  if (FLAG_wasm_jit_to_native) {
-    Handle<Code> temp_code = compiler::CompileWasmToJSWrapper(
-        isolate, target, sig, import_index, origin,
-        instance->compiled_module()->use_trap_handler(), js_imports_table);
-    return WasmCodeWrapper(
-        instance->compiled_module()->GetNativeModule()->AddCodeCopy(
-            temp_code, wasm::WasmCode::kWasmToJsWrapper, import_index));
+
+   // No wasm function or being debugged. Compile a new wrapper for the new
+   // signature.
+   if (FLAG_wasm_jit_to_native) {
+     Handle<Code> temp_code = compiler::CompileWasmToJSWrapper(
+         isolate, target, sig, import_index, origin,
+         instance->compiled_module()->use_trap_handler(), js_imports_table);
+     return WasmCodeWrapper(
+         instance->compiled_module()->GetNativeModule()->AddCodeCopy(
+             temp_code, wasm::WasmCode::kWasmToJsWrapper, import_index));
   } else {
     return WasmCodeWrapper(compiler::CompileWasmToJSWrapper(
         isolate, target, sig, import_index, origin,
@@ -2872,6 +2873,14 @@ int InstanceBuilder::ProcessImports(Handle<FixedArray> code_table,
           ReportLinkError("function import requires a callable", index,
                           module_name, import_name);
           return -1;
+        }
+        auto target = Handle<JSReceiver>::cast(value);
+        if (!module_->functions[import.index].sig->is_trusted() &&
+            !WasmExportedFunction::IsWasmExportedFunction(*target)) {
+          ReportLinkError("js function provided for untrusted import", index,
+                          module_name, import_name);
+          return -1;
+
         }
         WasmCodeWrapper import_code = UnwrapExportOrCompileImportWrapper(
             isolate_, module_->functions[import.index].sig,
