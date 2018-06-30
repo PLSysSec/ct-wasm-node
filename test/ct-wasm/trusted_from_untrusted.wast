@@ -1,3 +1,3 @@
 (module
-    (func $x trusted)
-    (func $y (call $x)))
+    (func $x)
+    (func $y untrusted (call $x)))

@@ -1,7 +1,7 @@
 -include config.mk
 
 BUILDTYPE ?= Debug
-PYTHON ?= python
+PYTHON ?= python2
 DESTDIR ?=
 SIGN ?=
 PREFIX ?= /usr/local
@@ -510,7 +510,7 @@ WASMS = $(WASTS:.wast=.wasm)
 # WASMS := $(patsubst %.wast, %.wasm, $(WASTS))
 
 test-ct-wasm: ct-wasm $(WASMS)
-	$(PYTHON) tools/test.py  ct-wasm
+	$(PYTHON) tools/test.py ct-wasm
 
 .PHONY: test-hash-seed
 # Verifies the hash seed used by V8 for hashing is random.

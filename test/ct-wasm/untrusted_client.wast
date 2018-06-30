@@ -1,3 +1,3 @@
 (module
-    (import "lib" "trusted" (func))
+    (import "lib" "trusted" (func untrusted))
 )

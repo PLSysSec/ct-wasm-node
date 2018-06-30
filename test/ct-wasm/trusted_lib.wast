@@ -1,4 +1,4 @@
 (module
 
-(func (export "trusted") trusted)
+(func (export "trusted"))
 )
