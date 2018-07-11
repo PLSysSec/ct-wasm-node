@@ -302,6 +302,12 @@ class WasmGraphBuildingInterface {
     ssa_env_->control = merge;
   }
 
+  void SecretSelect(Decoder* decoder, const Value& cond, const Value& fval,
+              const Value& tval, Value* result) {
+    auto node = BUILD(SecretSelect, cond.node, fval.node, tval.node);
+    if (result) result->node = node;
+  }
+
   void Br(Decoder* decoder, Control* target) {
     MergeValuesInto(decoder, target, target->br_merge());
   }

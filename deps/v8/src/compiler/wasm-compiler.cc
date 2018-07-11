@@ -4185,6 +4185,26 @@ Node* WasmGraphBuilder::SecretOp(wasm::WasmOpcode opcode, Node* const* inputs) {
       FATAL_UNSUPPORTED_OPCODE(opcode);
   }
 }
+
+
+Node* WasmGraphBuilder::SecretSelect(Node* cond, Node* fval, Node* tval) {
+      MachineOperatorBuilder* m = jsgraph()->machine();
+      Node* eqz = 
+          graph()->NewNode(m->Word32Equal(), cond, jsgraph()->Int32Constant(0));
+      Node* negd = 
+          graph()->NewNode(m->Int32Sub(), jsgraph()->Int32Constant(0), eqz);
+
+      Node* xdvals = 
+          graph()->NewNode(m->Word32Xor(), fval, tval);
+
+      Node* anded =
+          graph()->NewNode(m->Word32Xor(), negd, xdvals);
+
+      Node* answer =
+          graph()->NewNode(m->Word32Xor(), anded, fval);
+      return answer;
+}
+
 Node* WasmGraphBuilder::SimdOp(wasm::WasmOpcode opcode, Node* const* inputs) {
   has_simd_ = true;
   switch (opcode) {

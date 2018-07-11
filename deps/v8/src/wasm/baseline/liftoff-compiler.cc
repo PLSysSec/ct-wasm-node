@@ -734,6 +734,11 @@ class LiftoffCompiler {
     unsupported(decoder, "select");
   }
 
+  void SecretSelect(Decoder* decoder, const Value& cond, const Value& fval,
+              const Value& tval, Value* result) {
+    unsupported(decoder, "secret_select");
+  }
+
   void Br(Control* target) {
     if (!target->br_merge()->reached) {
       target->label_state.InitMerge(*__ cache_state(), __ num_locals(),

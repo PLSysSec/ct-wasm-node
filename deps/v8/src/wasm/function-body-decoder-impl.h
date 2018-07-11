@@ -589,6 +589,8 @@ struct ControlWithNamedConstructors : public ControlBase<Value> {
   F(Unreachable)                                                               \
   F(Select, const Value& cond, const Value& fval, const Value& tval,           \
     Value* result)                                                             \
+  F(SecretSelect, const Value& cond, const Value& fval, const Value& tval,           \
+    Value* result)                                                             \
   F(Br, Control* target)                                                       \
   F(BrIf, const Value& cond, Control* target)                                  \
   F(BrTable, const BranchTableOperand<validate>& operand, const Value& key)    \
@@ -2249,7 +2251,7 @@ class WasmFullDecoder : public WasmDecoder<validate> {
           break;
         }
         auto* result = Push(tval.type == kWasmVar ? fval.type : tval.type);
-        CALL_INTERFACE_IF_REACHABLE(Select, cond, fval, tval, result);
+        CALL_INTERFACE_IF_REACHABLE(SecretSelect, cond, fval, tval, result);
         break;
       }
       case kExprS32LoadMem8S:
