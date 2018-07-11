@@ -100,6 +100,7 @@ async function testClassification() {
 async function testSecretSelect() {
   let lib = await instance('secret_select.wasm', {});
   assert.equal(lib.instance.exports.secret_select(3, 4, 1), 3);
+  assert.equal(lib.instance.exports.secret_select(2, 5, 0), 5);
 
   await instance('secret_select_err.wasm', {})
     .then(() => assert.fail("Selected public value with secret condition"))

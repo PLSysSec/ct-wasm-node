@@ -4195,13 +4195,13 @@ Node* WasmGraphBuilder::SecretSelect(Node* cond, Node* fval, Node* tval) {
           graph()->NewNode(m->Int32Sub(), jsgraph()->Int32Constant(0), eqz);
 
       Node* xdvals = 
-          graph()->NewNode(m->Word32Xor(), fval, tval);
+          graph()->NewNode(m->Word32Xor(), tval, fval);
 
       Node* anded =
-          graph()->NewNode(m->Word32Xor(), negd, xdvals);
+          graph()->NewNode(m->Word32And(), negd, xdvals);
 
       Node* answer =
-          graph()->NewNode(m->Word32Xor(), anded, fval);
+          graph()->NewNode(m->Word32Xor(), anded, tval);
       return answer;
 }
 
